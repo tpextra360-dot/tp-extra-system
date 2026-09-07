@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก - TP Extra</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+        body { background-color: #e8f5e9; margin: 0; padding: 20px; color: #333; }
+        .form-container { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h2 { color: #6a1b9a; text-align: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        input[readonly] { background-color: #f5f5f5; color: #888; border: 1px dashed #ccc; }
+        .section-title { background: #6a1b9a; color: #fff; padding: 5px 10px; border-radius: 5px; margin: 20px 0 15px 0; font-size: 1rem; }
+        .btn-submit { background-color: #6a1b9a; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn-submit:active { background-color: #4a148c; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>แบบฟอร์มสมัครสมาชิก</h2>
+    
+    <!-- ข้อมูลผู้แนะนำ (อ่านอย่างเดียว) -->
+    <div class="form-group">
+        <label>ข้อมูลผู้แนะนำ</label>
+        <input type="text" id="sponsorName" value="นาย ผู้แนะนำ ใจดี" readonly>
+    </div>
+    <div class="form-group">
+        <label>รหัสผู้แนะนำ</label>
+        <input type="text" id="sponsorCode" value="TP999999" readonly style="font-weight: bold; color: #6a1b9a;">
+    </div>
+    <div class="form-group">
+        <label>รหัสผู้สมัคร (ระบบจะสร้างให้อัตโนมัติ)</label>
+        <input type="text" id="applicantCode" value="รอการอนุมัติ..." readonly>
+    </div>
+
+    <!-- ข้อมูลส่วนตัวผู้สมัคร -->
+    <div class="section-title">ข้อมูลส่วนตัว (ส่วนที่ 1)</div>
+    <div class="row">
+        <div class="col" style="flex: 0.4;">
+            <label>คำนำหน้า</label>
+            <select id="prefix" onchange="syncAccountName()">
+                <option value="นาย">นาย</option>
+                <option value="นาง">นาง</option>
+                <option value="นางสาว">นางสาว</option>
+            </select>
+        </div>
+        <div class="col">
+            <label>ชื่อ</label>
+            <input type="text" id="firstName" onkeyup="syncAccountName()" placeholder="ชื่อจริง">
+        </div>
+        <div class="col">
+            <label>นามสกุล</label>
+            <input type="text" id="lastName" onkeyup="syncAccountName()" placeholder="นามสกุล">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col"><label>บ้านเลขที่</label><input type="text"></div>
+        <div class="col"><label>หมู่ที่</label><input type="text"></div>
+        <div class="col"><label>ถนน-ซอย</label><input type="text"></div>
+    </div>
+
+    <div class="form-group">
+        <label>จังหวัด</label>
+        <select id="province"><option>กรุงเทพมหานคร</option><option>ปทุมธานี</option></select>
+    </div>
+    <div class="form-group">
+        <label>อำเภอ/เขต</label>
+        <select id="district"><option>ลำลูกกา</option></select>
+    </div>
+    <div class="form-group">
+        <label>ตำบล/แขวง</label>
+        <select id="subdistrict" onchange="autoFillZipcode()"><option value="">-- เลือกตำบล --</option><option value="12150">พืชอุดม</option></select>
+    </div>
+    <div class="form-group">
+        <label>รหัสไปรษณีย์</label>
+        <input type="text" id="zipcode" readonly>
+    </div>
+
+    <div class="form-group">
+        <label>เบอร์โทรศัพท์มือถือ</label>
+        <input type="tel" maxlength="10" placeholder="08xxxxxxxx">
+    </div>
+    <div class="form-group">
+        <label>เลขบัตรประจำตัวประชาชน (13 หลัก)</label>
+        <input type="text" maxlength="13" placeholder="x-xxxx-xxxxx-xx-x">
+        <small style="color: red;">* สมัครได้ 1 รหัส ต่อ 1 บัตรประชาชนเท่านั้น</small>
+    </div>
+
+    <!-- ข้อมูลธนาคาร (กรอกภายหลังได้) -->
+    <div class="section-title">ข้อมูลธนาคาร (ส่วนที่ 2 - กรอกภายหลังได้)</div>
+    <div class="form-group">
+        <label>ธนาคาร</label>
+        <select>
+            <option value="">-- เลือกธนาคาร --</option>
+            <option>กสิกรไทย (KBANK)</option>
+            <option>ไทยพาณิชย์ (SCB)</option>
+            <option>กรุงเทพ (BBL)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>ชื่อบัญชี (ระบบดึงอัตโนมัติ)</label>
+        <input type="text" id="accountName" readonly>
+    </div>
+    <div class="form-group">
+        <label>เลขที่บัญชี</label>
+        <input type="text" placeholder="ระบุเลขบัญชีธนาคาร">
+    </div>
+    <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" placeholder="example@email.com">
+    </div>
+
+    <button type="button" class="btn-submit" onclick="alert('บันทึกข้อมูลการสมัครเรียบร้อยแล้ว!')">บันทึกการสมัคร</button>
+</div>
+
+<script>
+    // ฟังก์ชันล็อกชื่อบัญชีให้ตรงกับชื่อผู้สมัคร
+    function syncAccountName() {
+        const prefix = document.getElementById('prefix').value;
+        const fname = document.getElementById('firstName').value;
+        const lname = document.getElementById('lastName').value;
+        document.getElementById('accountName').value = `${prefix} ${fname} ${lname}`.trim();
+    }
+
+    // ฟังก์ชันจำลองการเด้งรหัสไปรษณีย์อัตโนมัติ
+    function autoFillZipcode() {
+        const subdistrict = document.getElementById('subdistrict').value;
+        document.getElementById('zipcode').value = subdistrict;
+    }
+</script>
+
+</body>
+</html>

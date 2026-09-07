@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทีมงานของฉัน - TP Extra</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; }
+        body { background-color: #e8f5e9; color: #333; padding-bottom: 30px; }
+        
+        /* แถบด้านบน (Header) */
+        .header { background-color: #6a1b9a; color: #fff; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header h3 { margin: 0; font-size: 1.2rem; }
+        .back-btn { position: absolute; left: 15px; top: 15px; color: #ffd700; text-decoration: none; font-weight: bold; font-size: 1.2rem; }
+
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+
+        /* บรรทัดที่ 1: โปรไฟล์ตัวเอง */
+        .profile-card { background: #fff; border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .profile-pic { width: 70px; height: 70px; background-color: #ccc; border-radius: 50%; object-fit: cover; border: 3px solid #6a1b9a; }
+        .profile-info h4 { margin: 0 0 5px 0; color: #6a1b9a; font-size: 1.1rem; }
+        .profile-info p { margin: 0; color: #666; font-size: 0.9rem; }
+        .badge { background: #ffd700; color: #6a1b9a; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
+
+        /* บรรทัดที่ 5 (ดึงขึ้นมาเพื่อให้กดง่าย): Link & QR Sponsor */
+        .sponsor-tools { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-tool { flex: 1; background: #6a1b9a; color: #fff; text-align: center; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 0.95rem; cursor: pointer; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-tool.qr { background: #fff; color: #6a1b9a; border: 2px solid #6a1b9a; }
+        
+        /* บรรทัดที่ 3 & 4: สถิติองค์กร */
+        .stats-container { background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .stat-total { text-align: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; }
+        .stat-total h2 { color: #6a1b9a; font-size: 2rem; margin: 5px 0; }
+        .stat-total p { font-size: 0.9rem; color: #666; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+        .stat-box { background: #f9f9f9; padding: 10px 5px; border-radius: 10px; }
+        .stat-box span { display: block; font-size: 1.2rem; font-weight: bold; color: #333; }
+        .stat-box small { font-size: 0.75rem; color: #888; }
+
+        /* บรรทัดที่ 2: รายชื่อลูกทีมแนะนำตรง (ย้ายมาล่างสุดเพื่อรองรับรายการที่ยาวมากๆ) */
+        .team-list-header { font-size: 1rem; font-weight: bold; color: #6a1b9a; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .team-card { background: #fff; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .team-card .profile-pic { width: 50px; height: 50px; border: 2px solid #ddd; }
+        .team-info h5 { margin: 0 0 3px 0; font-size: 1rem; color: #333; }
+        .team-info p { margin: 0; font-size: 0.85rem; color: #777; }
+        .team-date { margin-left: auto; font-size: 0.75rem; color: #aaa; text-align: right; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">❮ กลับ</a>
+        <h3>ทีมงานของฉัน</h3>
+    </div>
+
+    <div class="container">
+        <!-- บรรทัดที่ 1: โปรไฟล์ตัวเอง -->
+        <div class="profile-card">
+            <!-- ใช้รูป Placeholder ไปก่อน -->
+            <img src="https://via.placeholder.com/150/6a1b9a/ffffff?text=ME" alt="Profile" class="profile-pic">
+            <div class="profile-info">
+                <h4>นาย สมชาย ใจสู้</h4>
+                <p>รหัส: <strong>TP888888</strong></p>
+                <span class="badge">สมาชิกปกติ</span>
+            </div>
+        </div>
+
+        <!-- บรรทัดที่ 5: Link & QR Sponsor -->
+        <div class="sponsor-tools">
+            <button class="btn-tool" onclick="alert('คัดลอกลิงก์แนะนำเรียบร้อย: tpextra.com/reg?sponsor=TP888888')">
+                🔗 Copy Link
+            </button>
+            <button class="btn-tool qr" onclick="alert('เปิดหน้าต่างแสดง QR Code')">
+                📱 แสดง QR
+            </button>
+        </div>
+
+        <!-- บรรทัดที่ 3 และ 4: สถิติ -->
+        <div class="stats-container">
+            <!-- บรรทัดที่ 3: สมาชิกทั้งองค์กร -->
+            <div class="stat-total">
+                <p>สมาชิกทั้งองค์กร (รวม 5 ชั้น)</p>
+                <h2>1,250</h2>
+                <p>คน</p>
+            </div>
+            
+            <!-- บรรทัดที่ 4: สถิติย่อย -->
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <span>5</span>
+                    <small>แนะนำตรง<br>วันนี้</small>
+                </div>
+                <div class="stat-box">
+                    <span>42</span>
+                    <small>แนะนำตรง<br>ทั้งหมด</small>
+                </div>
+                <div class="stat-box">
+                    <span>18</span>
+                    <small>สมาชิกใหม่องค์กร<br>วันนี้</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- บรรทัดที่ 2: ลูกทีมแนะนำตรง (ไม่ต้องโชว์ผัง) -->
+        <div class="team-list-header">
+            <span>ลูกทีมแนะนำตรง (Level 1)</span>
+            <span style="color: #888; font-size: 0.85rem;">42 คน</span>
+        </div>
+
+        <!-- คนที่ 1 -->
+        <div class="team-card">
+            <img src="https://via.placeholder.com/150/cccccc/ffffff?text=U1" alt="User" class="profile-pic">
+            <div class="team-info">
+                <h5>นาง สมหญิง แบ่งปัน</h5>
+                <p>TP888889</p>
+            </div>
+            <div class="team-date">สมัครวันนี้<br>10:45 น.</div>
+        </div>
+
+        <!-- คนที่ 2 -->
+        <div class="team-card">
+            <img src="https://via.placeholder.com/150/cccccc/ffffff?text=U2" alt="User" class="profile-pic">
+            <div class="team-info">
+                <h5>นาย ขยัน รวยเร็ว</h5>
+                <p>TP888890</p>
+            </div>
+            <div class="team-date">06/09/2026<br>14:20 น.</div>
+        </div>
+        
+        <!-- คนที่ 3 -->
+        <div class="team-card">
+            <img src="https://via.placeholder.com/150/cccccc/ffffff?text=U3" alt="User" class="profile-pic">
+            <div class="team-info">
+                <h5>นางสาว รักดี มีชัย</h5>
+                <p>TP888891</p>
+            </div>
+            <div class="team-date">05/09/2026<br>09:15 น.</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

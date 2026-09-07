@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point & Bonus - TP Extra</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; }
+        body { background-color: #e8f5e9; color: #333; padding-bottom: 30px; }
+        
+        /* แถบด้านบน (Header) */
+        .header { background-color: #6a1b9a; color: #fff; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header h3 { margin: 0; font-size: 1.2rem; }
+        .back-btn { position: absolute; left: 15px; top: 15px; color: #ffd700; text-decoration: none; font-weight: bold; font-size: 1.2rem; }
+
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+
+        .section-title { font-size: 1.1rem; font-weight: bold; color: #6a1b9a; margin-bottom: 10px; margin-top: 10px; }
+
+        /* กล่องแต้ม (Grid Layout) */
+        .point-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .point-card { background: #fff; border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; position: relative; overflow: hidden; border-bottom: 4px solid #6a1b9a; }
+        .point-card:active { transform: scale(0.95); background-color: #f3e5f5; }
+        .point-card.team { border-bottom-color: #2e7d32; }
+        .point-card.team:active { background-color: #e8f5e9; }
+        
+        .point-card span { display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px; }
+        .point-card h2 { margin: 0; font-size: 1.6rem; color: #333; }
+        .click-hint { font-size: 0.7rem; color: #999; margin-top: 5px; display: inline-block; background: #f5f5f5; padding: 2px 8px; border-radius: 10px; }
+
+        /* Modal (ป๊อปอัปดูประวัติ) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: #fff; width: 100%; max-width: 500px; height: 80vh; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-header h3 { margin: 0; color: #6a1b9a; font-size: 1.2rem; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer; }
+
+        /* รายการประวัติ (History List) */
+        .history-list { overflow-y: auto; flex: 1; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
+        .history-info p { margin: 0; font-size: 0.9rem; font-weight: bold; color: #333; }
+        .history-info small { color: #888; font-size: 0.8rem; }
+        .history-amount { font-size: 1.1rem; font-weight: bold; color: #2e7d32; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">❮ กลับ</a>
+        <h3>Point & Bonus</h3>
+    </div>
+
+    <div class="container">
+        <!-- บรรทัดที่ 1: Cash Back (จากการซื้อของตัวเอง) -->
+        <div class="section-title">🛍️ Cash Back (ซื้อส่วนตัว 1%)</div>
+        <div class="point-grid">
+            <div class="point-card" onclick="openHistory('Cash Back วันนี้')">
+                <span>Cash Back วันนี้</span>
+                <h2>15.50</h2>
+                <div class="click-hint">คลิกดูประวัติ</div>
+            </div>
+            <div class="point-card" onclick="openHistory('Cash Back สะสม')">
+                <span>Cash Back สะสม</span>
+                <h2>450.00</h2>
+                <div class="click-hint">คลิกดูประวัติ</div>
+            </div>
+        </div>
+
+        <!-- บรรทัดที่ 2: โบนัสกินใช้ของทีมงาน (Unilevel) -->
+        <div class="section-title">👨‍👩‍👦 โบนัสทีมงาน (กินใช้ใต้องค์กร)</div>
+        <div class="point-grid">
+            <div class="point-card team" onclick="openHistory('โบนัสทีมงาน วันนี้')">
+                <span>โบนัสทีมงาน วันนี้</span>
+                <h2>120.00</h2>
+                <div class="click-hint">คลิกดูประวัติ</div>
+            </div>
+            <div class="point-card team" onclick="openHistory('โบนัสทีมงาน รวมทั้งหมด')">
+                <span>โบนัสรวมทั้งหมดที่เคยได้รับ</span>
+                <h2>5,420.50</h2>
+                <div class="click-hint">คลิกดูประวัติ</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ป๊อปอัป (Modal) แสดงประวัติการรับแต้ม -->
+    <!-- ============================================== -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">ประวัติ...</h3>
+                <button class="close-btn" onclick="closeModal('historyModal')">×</button>
+            </div>
+            
+            <div class="history-list" id="historyData">
+                <!-- ข้อมูลจำลองจะถูก Inject ผ่าน JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันเปิดป๊อปอัปและจำลองข้อมูลประวัติตามประเภทที่คลิก
+        function openHistory(type) {
+            document.getElementById('modalTitle').innerText = 'ประวัติ ' + type;
+            const historyContainer = document.getElementById('historyData');
+            
+            // จำลองข้อมูล (ในระบบจริงจะดึงข้อมูลผ่าน API / Backend)
+            let html = '';
+            for(let i = 1; i <= 5; i++) {
+                let time = `0${i}:30 น.`;
+                let detail = type.includes('ทีมงาน') ? `จากรหัส TP88889${i} (สาขา 00${i})` : `ซื้อสินค้า สาขา 00${i}`;
+                let amount = type.includes('ทีมงาน') ? `+ 20.00` : `+ 5.50`;
+                
+                html += `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <p>${detail}</p>
+                            <small>วันนี้, ${time}</small>
+                        </div>
+                        <div class="history-amount">${amount}</div>
+                    </div>
+                `;
+            }
+            historyContainer.innerHTML = html;
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
