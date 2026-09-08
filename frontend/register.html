@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก - TP Extra</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+        
+        .profile-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #6a1b9a; margin-bottom: 10px; background: #eee; }
+        .line-name { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 20px; }
+        
+        .form-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 1.1rem; text-align: center; }
+        input[readonly] { background-color: #f5f5f5; color: #888; }
+        
+        .consent-box { font-size: 0.85rem; text-align: left; margin: 20px 0; display: flex; align-items: flex-start; gap: 10px; }
+        .btn-submit { background-color: #6a1b9a; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+        .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="appContent" style="display: none;">
+    <img id="profileImage" class="profile-img" src="https://via.placeholder.com/150" alt="Profile">
+    <div class="line-name" id="displayName">ผู้ใช้ทั่วไป</div>
+    
+    <div class="form-group">
+        <label>รหัสผู้แนะนำของคุณ</label>
+        <input type="text" id="sponsorCode" value="TP999999" readonly>
+    </div>
+
+    <div class="form-group">
+        <label>เบอร์โทรศัพท์ (ใส่แค่ 10 หลัก)</label>
+        <input type="tel" id="phone" maxlength="10" placeholder="08xxxxxxxx" onkeyup="checkReady()">
+    </div>
+
+    <div class="consent-box">
+        <input type="checkbox" id="consentCheck" onchange="checkReady()" style="width: 20px; margin-top: 3px;">
+        <span>ฉันยอมรับเงื่อนไขการใช้งานของ TP Extra</span>
+    </div>
+
+    <button type="button" id="submitBtn" class="btn-submit" disabled onclick="submitRegistration()">เข้าสู่ระบบ / สมัครสมาชิก</button>
+</div>
+
+<div id="loading"><h3 style="color: #6a1b9a;">กำลังโหลดข้อมูล...</h3></div>
+
+<!-- โค้ดเชื่อมต่อ API -->
+<script>
+    const API_BASE_URL = "https://tp-extra-system-production.up.railway.app"; // ถ้าเอาขึ้น Railway แล้วค่อยมาเปลี่ยนตรงนี้ครับ
+    let lineProfile = { userId: null, displayName: "ผู้ใช้ทั่วไป", pictureUrl: "https://via.placeholder.com/150" };
+
+    async function initLIFF() {
+        try {
+            await liff.init({ liffId: "YOUR_LIFF_ID" }); // อนาคตค่อยเอา LIFF ID มาใส่
+            if (liff.isLoggedIn()) { lineProfile = await liff.getProfile(); }
+        } catch (err) { console.log("รันบนคอมพิวเตอร์ ใช้ข้อมูลจำลองแทน"); } 
+        
+        document.getElementById('profileImage').src = lineProfile.pictureUrl;
+        document.getElementById('displayName').innerText = "สวัสดีคุณ " + lineProfile.displayName;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('appContent').style.display = 'block';
+    }
+    
+    initLIFF();
+
+    function checkReady() {
+        const phone = document.getElementById('phone').value;
+        const consent = document.getElementById('consentCheck').checked;
+        document.getElementById('submitBtn').disabled = !(phone.length === 10 && consent);
+    }
+
+    async function submitRegistration() {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').innerText = "กำลังบันทึก...";
+
+        const data = {
+            sponsor_code: document.getElementById('sponsorCode').value,
+            phone: document.getElementById('phone').value,
+            line_id: lineProfile.userId,
+            first_name: lineProfile.displayName,
+            line_picture: lineProfile.pictureUrl,
+            consent_accepted: document.getElementById('consentCheck').checked
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/member/register`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert("🎉 สมัครสมาชิกสำเร็จ! รหัสของคุณคือ: " + result.member_code);
+                window.location.href = "index.html"; 
+            } else {
+                alert("❌ " + result.detail);
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').innerText = "เข้าสู่ระบบ / สมัครสมาชิก";
+            }
+        } catch (error) {
+            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+            document.getElementById('submitBtn').disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
