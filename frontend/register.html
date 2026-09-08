@@ -53,60 +53,18 @@
 
 <!-- โค้ดเชื่อมต่อ API -->
 <script>
-    const API_BASE_URL = "https://tp-extra-system-production.up.railway.app"; // ถ้าเอาขึ้น Railway แล้วค่อยมาเปลี่ยนตรงนี้ครับ
-    let lineProfile = { userId: null, displayName: "ผู้ใช้ทั่วไป", pictureUrl: "https://via.placeholder.com/150" };
-
-    async function initLIFF() {
-        try {
-            await liff.init({ liffId: "YOUR_LIFF_ID" }); // อนาคตค่อยเอา LIFF ID มาใส่
-            if (liff.isLoggedIn()) { lineProfile = await liff.getProfile(); }
-        } catch (err) { console.log("รันบนคอมพิวเตอร์ ใช้ข้อมูลจำลองแทน"); } 
-        
-        document.getElementById('profileImage').src = lineProfile.pictureUrl;
-        document.getElementById('displayName').innerText = "สวัสดีคุณ " + lineProfile.displayName;
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('appContent').style.display = 'block';
-    }
-    
-    initLIFF();
-
-    function checkReady() {
-        const phone = document.getElementById('phone').value;
-        const consent = document.getElementById('consentCheck').checked;
-        document.getElementById('submitBtn').disabled = !(phone.length === 10 && consent);
+    // ฟังก์ชันล็อกชื่อบัญชีให้ตรงกับชื่อผู้สมัคร
+    function syncAccountName() {
+        const prefix = document.getElementById('prefix').value;
+        const fname = document.getElementById('firstName').value;
+        const lname = document.getElementById('lastName').value;
+        document.getElementById('accountName').value = `${prefix} ${fname} ${lname}`.trim();
     }
 
-    async function submitRegistration() {
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').innerText = "กำลังบันทึก...";
-
-        const data = {
-            sponsor_code: document.getElementById('sponsorCode').value,
-            phone: document.getElementById('phone').value,
-            line_id: lineProfile.userId,
-            first_name: lineProfile.displayName,
-            line_picture: lineProfile.pictureUrl,
-            consent_accepted: document.getElementById('consentCheck').checked
-        };
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/member/register`, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            
-            if (response.ok) {
-                alert("🎉 สมัครสมาชิกสำเร็จ! รหัสของคุณคือ: " + result.member_code);
-                window.location.href = "index.html"; 
-            } else {
-                alert("❌ " + result.detail);
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('submitBtn').innerText = "เข้าสู่ระบบ / สมัครสมาชิก";
-            }
-        } catch (error) {
-            alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-            document.getElementById('submitBtn').disabled = false;
-        }
+    // ฟังก์ชันจำลองการเด้งรหัสไปรษณีย์อัตโนมัติ
+    function autoFillZipcode() {
+        const subdistrict = document.getElementById('subdistrict').value;
+        document.getElementById('zipcode').value = subdistrict;
     }
 </script>
 </body>
