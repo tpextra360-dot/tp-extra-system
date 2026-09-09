@@ -217,3 +217,11 @@ except Exception as e:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database/Server Error: {str(e)}"
         )
+except Exception as e:
+        conn.rollback()
+        import traceback
+        print("DATABASE ERROR TRACEBACK:", traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database/Server Error: {str(e)}"
+        )
