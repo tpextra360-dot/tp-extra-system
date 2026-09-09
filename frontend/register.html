@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สมัครสมาชิก - TP Extra</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6a1b9a">
+    
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
@@ -22,18 +27,25 @@
         .btn-submit { background-color: #6a1b9a; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
         .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100%; position: absolute; top:0; left:0; background: #f4f6f9; z-index: 50; }
     </style>
 </head>
 <body>
+
+<div id="loading"><h3 style="color: #6a1b9a;">กำลังโหลดข้อมูลบัญชี LINE...</h3></div>
 
 <div class="card" id="appContent" style="display: none;">
     <img id="profileImage" class="profile-img" src="https://via.placeholder.com/150" alt="Profile">
     <div class="line-name" id="displayName">ผู้ใช้ทั่วไป</div>
     
     <div class="form-group">
-        <label>รหัสผู้แนะนำของคุณ</label>
-        <input type="text" id="sponsorCode" value="TP999999" readonly>
+        <label>ชื่อ-นามสกุล (ตรงตามบัตรประชาชน)</label>
+        <input type="text" id="fullName" placeholder="เช่น สมชาย รักดี" onkeyup="checkReady()">
+    </div>
+
+    <div class="form-group">
+        <label>รหัสผู้แนะนำ (ถ้ามี)</label>
+        <input type="text" id="sponsorCode" placeholder="TPX-XXXXX">
     </div>
 
     <div class="form-group">
@@ -43,29 +55,87 @@
 
     <div class="consent-box">
         <input type="checkbox" id="consentCheck" onchange="checkReady()" style="width: 20px; margin-top: 3px;">
-        <span>ฉันยอมรับเงื่อนไขการใช้งานของ TP Extra</span>
+        <span>ฉันอายุครบ 20 ปีบริบูรณ์ และยอมรับ<a href="policy.html" target="_blank" style="color: #6a1b9a; text-decoration: underline;">นโยบายความเป็นส่วนตัว (PDPA)</a></span>
     </div>
 
     <button type="button" id="submitBtn" class="btn-submit" disabled onclick="submitRegistration()">เข้าสู่ระบบ / สมัครสมาชิก</button>
 </div>
 
-<div id="loading"><h3 style="color: #6a1b9a;">กำลังโหลดข้อมูล...</h3></div>
-
-<!-- โค้ดเชื่อมต่อ API -->
 <script>
-    // ฟังก์ชันล็อกชื่อบัญชีให้ตรงกับชื่อผู้สมัคร
-    function syncAccountName() {
-        const prefix = document.getElementById('prefix').value;
-        const fname = document.getElementById('firstName').value;
-        const lname = document.getElementById('lastName').value;
-        document.getElementById('accountName').value = `${prefix} ${fname} ${lname}`.trim();
+    const LIFF_ID = "2011278014-ykejPzwR";
+    let lineUserId = "";
+
+    async function initializeLiff() {
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                document.getElementById('profileImage').src = profile.pictureUrl;
+                document.getElementById('displayName').innerText = profile.displayName;
+                lineUserId = profile.userId;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('appContent').style.display = 'block';
+            } else {
+                liff.login();
+            }
+        } catch (error) {
+            console.error('LIFF Error:', error);
+            document.getElementById('loading').innerHTML = '<h3 style="color:red;">โหลด LINE LIFF ไม่สำเร็จ กรุณาเปิดผ่านแอป LINE</h3>';
+        }
     }
 
-    // ฟังก์ชันจำลองการเด้งรหัสไปรษณีย์อัตโนมัติ
-    function autoFillZipcode() {
-        const subdistrict = document.getElementById('subdistrict').value;
-        document.getElementById('zipcode').value = subdistrict;
+    function checkReady() {
+        const fullName = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const consent = document.getElementById('consentCheck').checked;
+        const btn = document.getElementById('submitBtn');
+        
+        if (fullName.length > 2 && phone.length === 10 && consent) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
     }
+
+    async function submitRegistration() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "กำลังดำเนินการ...";
+
+        const payload = {
+            full_name: document.getElementById('fullName').value.trim(),
+            phone_number: document.getElementById('phone').value.trim(),
+            upline_member_code: document.getElementById('sponsorCode').value.trim() || null,
+            line_user_id: lineUserId,
+            is_consent_age: document.getElementById('consentCheck').checked
+        };
+
+        try {
+            const response = await fetch('https://tp-extra-system-production.up.railway.app/api/v1/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert(`สมัครสมาชิกสำเร็จ! รหัสของคุณคือ: ${result.member_code}`);
+                window.location.href = "index.html"; // เปลี่ยนหน้าไปหน้าหลักหลังสมัครเสร็จ
+            } else {
+                alert(`ข้อผิดพลาด: ${result.detail}`);
+                btn.disabled = false;
+                btn.innerText = "เข้าสู่ระบบ / สมัครสมาชิก";
+            }
+        } catch (error) {
+            alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
+            btn.disabled = false;
+            btn.innerText = "เข้าสู่ระบบ / สมัครสมาชิก";
+        }
+    }
+
+    initializeLiff();
 </script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+# Environment Variables & Secrets (ห้ามหลุดเด็ดขาด)
+.env
+*.env
+firebase-key.json
+backend/firebase-key.json
+
+# Python Virtual Environment & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Vercel & Node
+.vercel
+node_modules/
+
+# OS System Files
+.DS_Store
+Thumbs.db

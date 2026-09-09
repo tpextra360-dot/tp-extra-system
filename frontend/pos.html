@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <!-- ล็อกหน้าจอไม่ให้ซูมเวลาเผลอกดรัวๆ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TP Extra - Mobile POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* แอนิเมชันเส้นสแกนเลเซอร์สีแดง */
+        @keyframes scan {
+            0% { top: 10%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
+        }
+        .laser-line { animation: scan 2s infinite linear; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden">
+
+    <!-- ส่วนที่ 1: กล้องสแกนบาร์โค้ด (ครึ่งบน) -->
+    <div class="relative h-2/5 bg-gray-900 flex items-center justify-center">
+        <!-- ตัวจำลองภาพจากกล้อง -->
+        <p class="text-gray-500 text-sm">กำลังเปิดกล้อง...</p>
+        
+        <!-- กรอบโฟกัสบาร์โค้ด -->
+        <div class="absolute inset-0 m-auto w-3/4 h-32 border-2 border-white/30 rounded-lg overflow-hidden">
+            <!-- เส้นเลเซอร์วิ่ง -->
+            <div class="absolute w-full h-0.5 bg-red-500 shadow-[0_0_8px_red] laser-line"></div>
+        </div>
+        
+        <!-- ปุ่มปิด/เปิดไฟฉาย -->
+        <button class="absolute top-4 right-4 bg-black/50 p-2 rounded-full text-white backdrop-blur-md">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </button>
+    </div>
+
+    <!-- ส่วนที่ 2: ตะกร้าสินค้า (ครึ่งล่าง) -->
+    <div class="flex-1 bg-white rounded-t-3xl -mt-6 relative z-10 flex flex-col shadow-[0_-8px_20px_-10px_rgba(0,0,0,0.1)]">
+        
+        <!-- หัวข้อตะกร้า -->
+        <div class="px-6 pt-6 pb-2 border-b border-gray-100 flex justify-between items-end">
+            <h2 class="text-xl font-bold text-gray-800">รายการสินค้า <span class="text-sm font-normal text-gray-400 ml-1">(2 ชิ้น)</span></h2>
+            <button class="text-sm text-red-500 font-medium">ล้างทั้งหมด</button>
+        </div>
+
+        <!-- รายการสินค้า (เลื่อนขึ้นลงได้) -->
+        <div class="flex-1 overflow-y-auto px-6 py-2 space-y-3">
+            <!-- สินค้าชิ้นที่ 1 -->
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl transform transition hover:scale-[1.02]">
+                <div>
+                    <h3 class="font-semibold text-gray-800">น้ำดื่มสิงห์ 600ml</h3>
+                    <p class="text-sm text-gray-500">885193... <span class="text-green-600 ml-2">฿10.00</span></p>
+                </div>
+                <div class="flex items-center space-x-3 bg-white border rounded-lg px-2 py-1 shadow-sm">
+                    <button class="text-gray-400 hover:text-red-500 font-bold px-2">-</button>
+                    <span class="font-bold text-gray-800">1</span>
+                    <button class="text-gray-400 hover:text-green-500 font-bold px-2">+</button>
+                </div>
+            </div>
+
+            <!-- สินค้าชิ้นที่ 2 -->
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl transform transition hover:scale-[1.02]">
+                <div>
+                    <h3 class="font-semibold text-gray-800">ขนมเลย์ รสออริจินัล</h3>
+                    <p class="text-sm text-gray-500">885071... <span class="text-green-600 ml-2">฿30.00</span></p>
+                </div>
+                <div class="flex items-center space-x-3 bg-white border rounded-lg px-2 py-1 shadow-sm">
+                    <button class="text-gray-400 hover:text-red-500 font-bold px-2">-</button>
+                    <span class="font-bold text-gray-800">2</span>
+                    <button class="text-gray-400 hover:text-green-500 font-bold px-2">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนที่ 3: สรุปยอดและปุ่มชำระเงิน -->
+        <div class="p-6 bg-white border-t border-gray-100 pb-8">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-500 font-medium">ยอดรวมทั้งหมด</span>
+                <span class="text-3xl font-black text-gray-800">฿70.00</span>
+            </div>
+            <button class="w-full bg-blue-600 active:bg-blue-700 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-blue-600/30 transition-transform transform active:scale-[0.98]">
+                ชำระเงิน
+            </button>
+        </div>
+
+    </div>
+
+</body>
+</html>

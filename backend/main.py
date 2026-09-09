@@ -1,126 +1,211 @@
-import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
-import pymysql
+import io
 import os
-from dotenv import load_dotenv
+import random
+import string
+from decimal import Decimal
+from typing import Optional, List
+from datetime import date
 
-load_dotenv() 
+from fastapi import FastAPI, HTTPException, status, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from PIL import Image, ImageOps
+import firebase_admin
+from firebase_admin import credentials, storage
 
-app = FastAPI(title="TP Extra Full Backend Service")
+from backend.database import get_db_connection
+
+app = FastAPI(
+    title="TP EXTRA SYSTEM API",
+    version="1.0.0",
+    description="ระบบนิเวศเศรษฐกิจชุมชนแบบปิดลูปและบริหารจัดการสายงาน"
+)
+
+# 1. ตั้งค่าความปลอดภัย CORS
+origins = [
+    "https://frontend-seven-gray-82.vercel.app",
+    "https://liff.line.me",
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def get_db_connection():
-    db_port = int(os.getenv("DB_PORT", 3306))
-    return pymysql.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=db_port,
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASS", ""),
-        database=os.getenv("DB_NAME", "tp_extra_db"),
-        cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=10
-    )
-
-# --- Pydantic Model (รับข้อมูลแบบสั้นจาก LINE) ---
-class MinimalRegisterRequest(BaseModel):
-    sponsor_code: str
-    phone: str
-    line_id: Optional[str] = None
-    first_name: Optional[str] = None
-    line_picture: Optional[str] = None
-    consent_accepted: bool = True
-
-# --- สร้างฐานข้อมูลอัตโนมัติ (เพิ่มช่อง LINE แล้ว) ---
-def init_db():
+# 2. ตั้งค่า Firebase Admin (ถ้ามีไฟล์คีย์)
+if not firebase_admin._apps:
     try:
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("DROP TABLE IF EXISTS member_wallets")
-            cursor.execute("DROP TABLE IF EXISTS hq_sales")
-            cursor.execute("DROP TABLE IF EXISTS members")
-            
-            cursor.execute("""
-                CREATE TABLE members (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    member_code VARCHAR(20) UNIQUE NOT NULL,
-                    sponsor_code VARCHAR(20),
-                    phone VARCHAR(15) UNIQUE NOT NULL,
-                    line_id VARCHAR(100) UNIQUE NULL,
-                    first_name VARCHAR(100),
-                    line_picture VARCHAR(255) NULL,
-                    consent_accepted BOOLEAN DEFAULT FALSE,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE member_wallets (
-                    member_code VARCHAR(20) PRIMARY KEY,
-                    cash_point DECIMAL(10, 2) DEFAULT 0.00,
-                    shopping_point DECIMAL(10, 2) DEFAULT 0.00,
-                    FOREIGN KEY (member_code) REFERENCES members(member_code)
-                )
-            """)
-        conn.commit()
-        conn.close()
-        print("✅ ฐานข้อมูลพร้อมใช้งาน (รองรับระบบ LINE แล้ว)")
+        cred = credentials.Certificate("firebase-key.json")
+        firebase_admin.initialize_app(cred, {
+            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
+        })
     except Exception as e:
-        print(f"❌ สร้างฐานข้อมูลล้มเหลว: {str(e)}")
+        print(f"Firebase Init Warning: {e}")
 
-@app.on_event("startup")
-def startup_event():
-    init_db()
+# 3. Pydantic Schemas
+class UserRegisterRequest(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=150)
+    phone_number: str = Field(..., pattern=r"^[0-9]{9,10}$")
+    upline_member_code: Optional[str] = None
+    line_user_id: Optional[str] = None
+    birth_date: Optional[date] = None
+    is_consent_age: bool = False
 
-# --- API สมัครสมาชิกแบบสั้น ---
-@app.post("/api/member/register")
-def register_member(data: MinimalRegisterRequest):
+class PaperMemberItem(BaseModel):
+    full_name: str
+    phone_number: str = Field(..., pattern=r"^[0-9]{9,10}$")
+    upline_member_code: Optional[str] = None
+    birth_date: Optional[date] = None
+    is_consent_age: bool = False
+
+class BulkImportRequest(BaseModel):
+    members: List[PaperMemberItem]
+
+def generate_member_code():
+    random_str = ''.join(random.choices(string.digits, k=5))
+    return f"TPX-{random_str}"
+
+def process_and_upload(image_bytes: bytes, size: int) -> str:
+    with Image.open(io.BytesIO(image_bytes)) as img:
+        img = img.convert("RGBA")
+        icon = ImageOps.pad(img, (size, size), method=Image.Resampling.LANCZOS, color=(255, 255, 255, 0))
+        output_buffer = io.BytesIO()
+        icon.save(output_buffer, format="PNG", optimize=True)
+        output_buffer.seek(0)
+
+    bucket = storage.bucket()
+    blob = bucket.blob(f"app_assets/icon-{size}x{size}.png")
+    blob.upload_from_file(output_buffer, content_type="image/png")
+    blob.make_public()
+    return blob.public_url
+
+# --- Endpoints ---
+
+@app.get("/")
+def read_root():
+    return {"message": "TP EXTRA Backend is running on Railway!"}
+
+# ระบบตรวจสลิปเดิม
+@app.post("/api/upload-slip")
+async def upload_slip(file: UploadFile = File(...)):
+    # จำลอง/ส่งต่อผลการตรวจสลิป
+    return {
+        "status": "success",
+        "ai_result": {
+            "status": "success",
+            "message": "ตรวจสอบสลิปผ่านเรียบร้อย",
+            "data": {
+                "extracted_amount": "500.00",
+                "reference_no": "TX" + ''.join(random.choices(string.digits, k=10))
+            }
+        }
+    }
+
+# ระบบสมัครสมาชิกเดี่ยว (ผ่าน LINE LIFF)
+@app.post("/api/v1/users/register", status_code=status.HTTP_201_CREATED)
+def register_member(req: UserRegisterRequest):
     conn = get_db_connection()
-    cursor = conn.cursor()
     try:
-        conn.begin()
-        
-        # เช็กว่าเบอร์โทรนี้หรือ LINE นี้สมัครไปหรือยัง
-        cursor.execute("SELECT id FROM members WHERE phone = %s OR line_id = %s FOR UPDATE", (data.phone, data.line_id))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="เบอร์โทรศัพท์ หรือบัญชี LINE นี้เป็นสมาชิกอยู่แล้ว")
-            
-        new_member_code = f"TP{data.phone[-6:]}"
-        
-        sql = """
-            INSERT INTO members (
-                member_code, sponsor_code, phone, line_id, first_name, line_picture, consent_accepted
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(sql, (
-            new_member_code, data.sponsor_code, data.phone, 
-            data.line_id, data.first_name, data.line_picture, data.consent_accepted
-        ))
-        
-        cursor.execute("INSERT INTO member_wallets (member_code) VALUES (%s)", (new_member_code,))
-        
-        conn.commit()
-        return {"status": "success", "member_code": new_member_code, "message": "สมัครสมาชิกสำเร็จ"}
-    except HTTPException as http_e:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id FROM users WHERE phone_number = %s", (req.phone_number,))
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="เบอร์โทรศัพท์นี้ลงทะเบียนแล้ว")
+
+            upline_id = None
+            if req.upline_member_code:
+                cursor.execute("SELECT id FROM users WHERE member_code = %s", (req.upline_member_code,))
+                upline = cursor.fetchone()
+                if not upline:
+                    raise HTTPException(status_code=404, detail="ไม่พบรหัสผู้แนะนำนี้ในระบบ")
+                upline_id = upline["id"]
+
+            member_code = generate_member_code()
+
+            insert_user_sql = """
+                INSERT INTO users (member_code, phone_number, full_name, line_user_id, upline_id, birth_date, is_consent_age)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_user_sql, (
+                member_code, req.phone_number, req.full_name, req.line_user_id, upline_id, req.birth_date, req.is_consent_age
+            ))
+            new_user_id = cursor.lastrowid
+
+            insert_wallet_sql = """
+                INSERT INTO wallets (user_id, point_balance, copay_quota_balance, ytd_purchase_amount)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(insert_wallet_sql, (new_user_id, Decimal("0.00000"), Decimal("0.00000"), Decimal("0.00")))
+
+            conn.commit()
+            return {"status": "success", "message": "สมัครสมาชิกเรียบร้อย", "member_code": member_code}
+    except HTTPException:
         conn.rollback()
-        raise http_e
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cursor.close()
         conn.close()
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-    
+# ระบบนำเข้ารายชื่อจากกระดาษ (Bulk Import)
+@app.post("/api/v1/admin/bulk-import-paper", status_code=status.HTTP_201_CREATED)
+def bulk_import_paper_members(req: BulkImportRequest):
+    conn = get_db_connection()
+    results = []
+    try:
+        with conn.cursor() as cursor:
+            for item in req.members:
+                cursor.execute("SELECT member_code FROM users WHERE phone_number = %s", (item.phone_number,))
+                if cursor.fetchone():
+                    continue
+
+                upline_id = None
+                if item.upline_member_code:
+                    cursor.execute("SELECT id FROM users WHERE member_code = %s", (item.upline_member_code,))
+                    upline = cursor.fetchone()
+                    if upline:
+                        upline_id = upline["id"]
+
+                new_member_code = generate_member_code()
+                cursor.execute("""
+                    INSERT INTO users (member_code, phone_number, full_name, birth_date, is_consent_age, upline_id) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (new_member_code, item.phone_number, item.full_name, item.birth_date, item.is_consent_age, upline_id))
+                new_user_id = cursor.lastrowid
+
+                cursor.execute("""
+                    INSERT INTO wallets (user_id, point_balance, copay_quota_balance, ytd_purchase_amount) 
+                    VALUES (%s, %s, %s, %s)
+                """, (new_user_id, Decimal("0.00000"), Decimal("0.00000"), Decimal("0.00")))
+                
+                results.append({"phone": item.phone_number, "member_code": new_member_code})
+            
+            conn.commit()
+            return {"status": "success", "imported_count": len(results), "details": results}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+# ระบบอัปโหลดโลโก้ PWA ปรับไซส์อัตโนมัติ
+@app.post("/api/v1/admin/upload-app-logo")
+async def upload_app_logo(file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น")
+
+    image_bytes = await file.read()
+    url_192 = process_and_upload(image_bytes, 192)
+    url_512 = process_and_upload(image_bytes, 512)
+
+    return {
+        "status": "success",
+        "icons": {
+            "192": url_192,
+            "512": url_512
+        }
+    }

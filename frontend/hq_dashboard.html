@@ -1,241 +1,43 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HQ Dashboard - TP Extra</title>
-    <style>
-        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; }
-        body { background-color: #f4f6f9; color: #333; }
+<div class="bg-white p-6 rounded-xl shadow space-y-4">
+    <h2 class="text-lg font-bold text-gray-800">เปลี่ยนไอคอนระบบ (PWA App Icon)</h2>
+    <p class="text-sm text-gray-500">อัปโหลดภาพต้นฉบับเพียง 1 ภาพ ระบบจะปรับขนาด 192x192 และ 512x512 ให้เข้ากับจอมือถือโดยอัตโนมัติ</p>
+    
+    <input type="file" id="logo-input" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+    
+    <button onclick="uploadNewLogo()" id="upload-logo-btn" class="bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-800">
+        อัปเดตไอคอนแอป
+    </button>
+</div>
+
+<script>
+async function uploadNewLogo() {
+    const fileInput = document.getElementById('logo-input');
+    if (fileInput.files.length === 0) return alert('กรุณาเลือกไฟล์ก่อน');
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    const btn = document.getElementById('upload-logo-btn');
+    btn.disabled = true;
+    btn.innerText = "กำลังแปลงขนาดและอัปโหลด...";
+
+    try {
+        const res = await fetch('https://tp-extra-system-production.up.railway.app/api/v1/admin/upload-app-logo', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await res.json();
         
-        /* แถบด้านบน (Header) */
-        .hq-header { background-color: #6a1b9a; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .title-gold { color: #ffd700; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
-        .title-white { color: #ffffff; font-size: 2.2rem; font-weight: 900; letter-spacing: 2px; }
-
-        .container { padding: 20px; max-width: 1200px; margin: auto; }
-        
-        /* ปุ่มย้อนกลับ */
-        .btn-back { display: none; background: #333; color: #fff; padding: 10px 20px; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
-        .btn-back:hover { background: #555; }
-
-        /* เมนูหลัก (Dashboard Grid) */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .dash-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); text-align: center; border-bottom: 5px solid #6a1b9a; transition: transform 0.2s; }
-        .dash-card:hover { transform: translateY(-5px); }
-        .dash-card.clickable { cursor: pointer; border-bottom-color: #ffd700; background-color: #fffde7; }
-        .dash-card h4 { color: #666; font-size: 1rem; margin-bottom: 10px; }
-        .dash-card h2 { color: #333; font-size: 2rem; }
-
-        /* ระบบนำทางเมนูย่อย */
-        .menu-nav { display: flex; gap: 15px; margin-bottom: 20px; }
-        .btn-menu { flex: 1; background: #fff; border: 2px solid #6a1b9a; color: #6a1b9a; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-menu:hover { background: #6a1b9a; color: #fff; }
-
-        /* ส่วนของเมนูต่างๆ (ซ่อนไว้ก่อน จะโชว์เมื่อกด) */
-        .section-panel { display: none; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .section-title { color: #6a1b9a; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-
-        /* Form & Grid */
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
-        .form-group input[readonly] { background: #f5f5f5; color: #888; }
-        
-        .btn-action { background: #4caf50; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-action.red { background: #f44336; }
-        
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background-color: #6a1b9a; color: #fff; }
-        .qty-control { display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .qty-btn { background: #ddd; border: none; width: 30px; height: 30px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        /* Modal สาขาย่อย */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #fff; padding: 25px; border-radius: 15px; width: 90%; max-width: 600px; }
-        .close-btn { float: right; font-size: 1.5rem; cursor: pointer; border: none; background: none; color: #888; }
-
-    </style>
-</head>
-<body>
-
-    <!-- แถบด้านบน -->
-    <div class="hq-header">
-        <div class="title-gold">TP Extra</div>
-        <div class="title-white">แบ่งปัน</div>
-    </div>
-
-    <div class="container">
-        
-        <button class="btn-back" id="btnBack" onclick="showMainMenu()">❮ ย้อนกลับสู่หน้าหลัก</button>
-
-        <!-- หน้าหลัก (Dashboard) -->
-        <div id="mainDashboard">
-            <!-- บรรทัดที่ 2: สถิติ Dashboard -->
-            <div class="dashboard-grid">
-                <div class="dash-card"><h4>ยอดขายรวม (บาท)</h4><h2>1,250,000</h2></div>
-                <div class="dash-card"><h4>จำนวนสมาชิก (คน)</h4><h2>12,450</h2></div>
-                <div class="dash-card"><h4>รวม Cash Point</h4><h2>84,500</h2></div>
-                <div class="dash-card"><h4>รวม Shopping Point</h4><h2>21,125</h2></div>
-                <div class="dash-card clickable" onclick="openBranchModal()">
-                    <h4>สาขาย่อย (คลิกดูข้อมูล)</h4>
-                    <h2 style="color: #6a1b9a;">15</h2>
-                </div>
-            </div>
-
-            <!-- ปุ่มเข้าเมนูย่อย -->
-            <div class="menu-nav">
-                <button class="btn-menu" onclick="openSection('posSection')">🛒 POS ขายสินค้า</button>
-                <button class="btn-menu" onclick="openSection('searchSection')">🔍 ค้นหาสมาชิก</button>
-                <button class="btn-menu" onclick="openSection('inventorySection')">📦 จัดการสต๊อกสินค้า</button>
-            </div>
-        </div>
-
-        <!-- ===================================== -->
-        <!-- บรรทัดที่ 3 & 4: POS ขายสินค้า -->
-        <!-- ===================================== -->
-        <div id="posSection" class="section-panel">
-            <h2 class="section-title">🛒 POS ขายสินค้า (ตัดสต๊อกอัตโนมัติ)</h2>
-            <!-- บรรทัดที่ 3: ข้อมูลบิล -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>ชื่อและรหัสสมาชิกผู้ซื้อ</label>
-                    <input type="text" placeholder="พิมพ์รหัส, ชื่อ หรือสแกน QR สมาชิก">
-                </div>
-                <div class="form-group">
-                    <label>สาขาที่ซื้อ</label>
-                    <input type="text" value="สำนักงานใหญ่ (HQ-001)" readonly>
-                </div>
-                <div class="form-group">
-                    <label>ช่องทางชำระเงิน</label>
-                    <select>
-                        <option>เงินสด</option>
-                        <option>โอนเงิน / พร้อมเพย์</option>
-                        <option>Cash Point</option>
-                        <option>ผสม (Point + เงินโอน)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- บรรทัดที่ 4: รายการสินค้า -->
-            <div class="form-row" style="background: #f9f9f9; padding: 15px; border-radius: 10px;">
-                <div class="form-group">
-                    <label>เลือกรายการสินค้า (หรือยิงบาร์โค้ด)</label>
-                    <select><option>สินค้า A (ราคา 500 บาท)</option><option>สินค้า B (ราคา 1,200 บาท)</option></select>
-                </div>
-                <div class="form-group">
-                    <label>จำนวน</label>
-                    <input type="number" value="1" min="1">
-                </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button class="btn-action" style="width: 100%;">+ เพิ่มลงตะกร้า</button>
-                </div>
-            </div>
-
-            <!-- ตะกร้าสินค้า -->
-            <table>
-                <tr><th>รายการสินค้า</th><th>ราคาต่อหน่วย</th><th>จำนวน</th><th>รวม</th><th>จัดการ</th></tr>
-                <tr>
-                    <td>สินค้า A</td>
-                    <td>500.00</td>
-                    <td>
-                        <div class="qty-control">
-                            <button class="qty-btn">-</button> <span>2</span> <button class="qty-btn">+</button>
-                        </div>
-                    </td>
-                    <td>1,000.00</td>
-                    <td><button class="btn-action red">ลบ</button></td>
-                </tr>
-            </table>
-            
-            <div style="text-align: right; margin-top: 20px;">
-                <h2 style="color: #6a1b9a;">ยอดชำระสุทธิ: 1,000.00 บาท</h2>
-                <button class="btn-action" style="font-size: 1.2rem; margin-top: 10px; padding: 15px 40px;">ยืนยันการขาย (ชำระเงิน)</button>
-            </div>
-        </div>
-
-        <!-- ===================================== -->
-        <!-- บรรทัดที่ 5: ค้นหาสมาชิก -->
-        <!-- ===================================== -->
-        <div id="searchSection" class="section-panel">
-            <h2 class="section-title">🔍 ค้นหาสมาชิก</h2>
-            <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>ค้นหาด้วย Member ID, ชื่อ-นามสกุล หรือ เบอร์โทรศัพท์</label>
-                    <input type="text" placeholder="ระบุคำค้นหา...">
-                </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button class="btn-action" style="width: 100%; background: #6a1b9a;">ค้นหาข้อมูล</button>
-                </div>
-            </div>
-            <!-- พื้นที่แสดงผลการค้นหา -->
-            <table>
-                <tr><th>Member ID</th><th>ชื่อ - นามสกุล</th><th>เบอร์โทร</th><th>ระดับ</th><th>Cash Point</th></tr>
-                <tr><td>TP888888</td><td>นาย สมชาย ใจสู้</td><td>0812345678</td><td>สมาชิกปกติ</td><td>1,250.00</td></tr>
-            </table>
-        </div>
-
-        <!-- ===================================== -->
-        <!-- คลังสินค้า (เพิ่มตามที่ AI วิเคราะห์) -->
-        <!-- ===================================== -->
-        <div id="inventorySection" class="section-panel">
-            <h2 class="section-title">📦 บันทึกยอดขายและสต๊อกสินค้า (ดูย้อนหลัง)</h2>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <h3>สต๊อกสินค้าคงเหลือ (สำนักงานใหญ่)</h3>
-                <button class="btn-action">+ รับสินค้าเข้าสต๊อก (ปรับปรุงยอด)</button>
-            </div>
-            <table>
-                <tr><th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>รับเข้า (รวม)</th><th>ขายออก (รวม)</th><th>คงเหลือจริง</th><th>สถานะ</th></tr>
-                <tr><td>P001</td><td>สินค้า A</td><td>1,000</td><td>850</td><td><strong style="color: #4caf50;">150</strong></td><td>ปกติ</td></tr>
-                <tr><td>P002</td><td>สินค้า B</td><td>500</td><td>495</td><td><strong style="color: #f44336;">5</strong></td><td>ใกล้หมด</td></tr>
-            </table>
-        </div>
-
-    </div>
-
-    <!-- ===================================== -->
-    <!-- ป๊อปอัป (Modal) ดูข้อมูลสาขาย่อย -->
-    <!-- ===================================== -->
-    <div class="modal" id="branchModal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('branchModal')">×</button>
-            <h2 class="section-title">รายชื่อสาขาย่อยทั้งหมด (15 สาขา)</h2>
-            <table>
-                <tr><th>รหัสสาขา</th><th>ชื่อสาขา / ผู้ดูแล</th><th>ยอดขายเดือนนี้</th><th>จัดการ</th></tr>
-                <tr><td>BR-002</td><td>สาขาเชียงใหม่ (คุณวิรัช)</td><td>125,000.00</td><td><button class="btn-action" style="padding: 5px 10px;">ดูประวัติ/ข้อมูล</button></td></tr>
-                <tr><td>BR-003</td><td>สาขาขอนแก่น (คุณนฤมล)</td><td>89,500.00</td><td><button class="btn-action" style="padding: 5px 10px;">ดูประวัติ/ข้อมูล</button></td></tr>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        // ฟังก์ชันระบบ SPA (Single Page Application) สำหรับเปลี่ยนหน้า
-        function openSection(sectionId) {
-            document.getElementById('mainDashboard').style.display = 'none';
-            document.getElementById('posSection').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'none';
-            document.getElementById('inventorySection').style.display = 'none';
-            
-            document.getElementById(sectionId).style.display = 'block';
-            document.getElementById('btnBack').style.display = 'block';
+        if (res.ok) {
+            alert('อัปเดตไอคอนแอปสำเร็จทั้ง 2 ขนาดเรียบร้อย!');
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + result.detail);
         }
-
-        function showMainMenu() {
-            document.getElementById('posSection').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'none';
-            document.getElementById('inventorySection').style.display = 'none';
-            
-            document.getElementById('mainDashboard').style.display = 'block';
-            document.getElementById('btnBack').style.display = 'none';
-        }
-
-        // ฟังก์ชันเปิด-ปิด ป๊อปอัปสาขา
-        function openBranchModal() { document.getElementById('branchModal').style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    </script>
-
-</body>
-</html>
+    } catch (e) {
+        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "อัปเดตไอคอนแอป";
+    }
+}
+</script>
