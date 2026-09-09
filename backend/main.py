@@ -2,18 +2,22 @@ import io
 import os
 import random
 import string
-from decimal import Decimal
-from typing import Optional, List
 from datetime import date
+from decimal import Decimal
+from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, status, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from PIL import Image, ImageOps
 import firebase_admin
+from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import credentials, storage
+from PIL import Image, ImageOps
+from pydantic import BaseModel, Field
 
-from backend.database import get_db_connection
+# นำเข้าฟังก์ชันเชื่อมต่อฐานข้อมูล
+try:
+    from backend.database import get_db_connection
+except ImportError:
+    from database import get_db_connection
 
 app = FastAPI(
     title="TP EXTRA SYSTEM API",
@@ -36,15 +40,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. ตั้งค่า Firebase Admin (ถ้ามีไฟล์คีย์)
+# 2. ป้องกันระบบแครชหากไม่มีไฟล์ firebase-key.json บนเซิร์ฟเวอร์
+firebase_initialized = False
 if not firebase_admin._apps:
-    try:
-        cred = credentials.Certificate("firebase-key.json")
-        firebase_admin.initialize_app(cred, {
-            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
-        })
-    except Exception as e:
-        print(f"Firebase Init Warning: {e}")
+    firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
+    if not os.path.exists(firebase_key_path):
+        firebase_key_path = "firebase-key.json"
+
+    if os.path.exists(firebase_key_path):
+        try:
+            cred = credentials.Certificate(firebase_key_path)
+            firebase_admin.initialize_app(cred, {
+                "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
+            })
+            firebase_initialized = True
+            print("Firebase initialized successfully.")
+        except Exception as e:
+            print(f"Firebase Init Error: {e}")
+    else:
+        print("Warning: Firebase key not found. Skipping Firebase initialization.")
 
 # 3. Pydantic Schemas
 class UserRegisterRequest(BaseModel):
@@ -70,6 +84,11 @@ def generate_member_code():
     return f"TPX-{random_str}"
 
 def process_and_upload(image_bytes: bytes, size: int) -> str:
+    if not firebase_admin._apps:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+            detail="Firebase Storage ยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์"
+        )
     with Image.open(io.BytesIO(image_bytes)) as img:
         img = img.convert("RGBA")
         icon = ImageOps.pad(img, (size, size), method=Image.Resampling.LANCZOS, color=(255, 255, 255, 0))
@@ -89,10 +108,8 @@ def process_and_upload(image_bytes: bytes, size: int) -> str:
 def read_root():
     return {"message": "TP EXTRA Backend is running on Railway!"}
 
-# ระบบตรวจสลิปเดิม
 @app.post("/api/upload-slip")
 async def upload_slip(file: UploadFile = File(...)):
-    # จำลอง/ส่งต่อผลการตรวจสลิป
     return {
         "status": "success",
         "ai_result": {
@@ -105,7 +122,6 @@ async def upload_slip(file: UploadFile = File(...)):
         }
     }
 
-# ระบบสมัครสมาชิกเดี่ยว (ผ่าน LINE LIFF)
 @app.post("/api/v1/users/register", status_code=status.HTTP_201_CREATED)
 def register_member(req: UserRegisterRequest):
     conn = get_db_connection()
@@ -147,11 +163,10 @@ def register_member(req: UserRegisterRequest):
         raise
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Database/Server Error: {str(e)}")
     finally:
         conn.close()
 
-# ระบบนำเข้ารายชื่อจากกระดาษ (Bulk Import)
 @app.post("/api/v1/admin/bulk-import-paper", status_code=status.HTTP_201_CREATED)
 def bulk_import_paper_members(req: BulkImportRequest):
     conn = get_db_connection()
@@ -188,11 +203,10 @@ def bulk_import_paper_members(req: BulkImportRequest):
             return {"status": "success", "imported_count": len(results), "details": results}
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Database/Server Error: {str(e)}")
     finally:
         conn.close()
 
-# ระบบอัปโหลดโลโก้ PWA ปรับไซส์อัตโนมัติ
 @app.post("/api/v1/admin/upload-app-logo")
 async def upload_app_logo(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
@@ -209,28 +223,3 @@ async def upload_app_logo(file: UploadFile = File(...)):
             "512": url_512
         }
     }
-except Exception as e:
-        conn.rollback()
-        import traceback
-        print("DATABASE ERROR TRACEBACK:", traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database/Server Error: {str(e)}"
-        )
-# ป้องกันระบบแครชหากไม่มีไฟล์ firebase-key.json บนเซิร์ฟเวอร์
-if not firebase_admin._apps:
-    firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
-    if not os.path.exists(firebase_key_path):
-        firebase_key_path = "firebase-key.json"
-
-    if os.path.exists(firebase_key_path):
-        try:
-            cred = credentials.Certificate(firebase_key_path)
-            firebase_admin.initialize_app(cred, {
-                "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
-            })
-            print("Firebase initialized successfully.")
-        except Exception as e:
-            print(f"Firebase Init Error: {e}")
-    else:
-        print("Warning: Firebase key not found. Skipping Firebase initialization.")
