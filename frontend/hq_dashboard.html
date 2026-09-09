@@ -1,43 +1,139 @@
-<div class="bg-white p-6 rounded-xl shadow space-y-4">
-    <h2 class="text-lg font-bold text-gray-800">เปลี่ยนไอคอนระบบ (PWA App Icon)</h2>
-    <p class="text-sm text-gray-500">อัปโหลดภาพต้นฉบับเพียง 1 ภาพ ระบบจะปรับขนาด 192x192 และ 512x512 ให้เข้ากับจอมือถือโดยอัตโนมัติ</p>
-    
-    <input type="file" id="logo-input" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
-    
-    <button onclick="uploadNewLogo()" id="upload-logo-btn" class="bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-800">
-        อัปเดตไอคอนแอป
-    </button>
-</div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP EXTRA - ศูนย์ควบคุมผู้บริหาร</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans pb-10">
 
-<script>
-async function uploadNewLogo() {
-    const fileInput = document.getElementById('logo-input');
-    if (fileInput.files.length === 0) return alert('กรุณาเลือกไฟล์ก่อน');
+    <!-- Header -->
+    <header class="bg-purple-800 text-white p-6 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Admin Control Center</h1>
+                <p id="admin-name" class="text-xs text-purple-200 mt-1">กำลังตรวจสอบสิทธิ์ผู้บริหาร...</p>
+            </div>
+            <span class="bg-purple-600 text-xs px-3 py-1 rounded-full font-semibold uppercase tracking-wider">Super Admin</span>
+        </div>
+    </header>
 
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    const btn = document.getElementById('upload-logo-btn');
-    btn.disabled = true;
-    btn.innerText = "กำลังแปลงขนาดและอัปโหลด...";
-
-    try {
-        const res = await fetch('https://tp-extra-system-production.up.railway.app/api/v1/admin/upload-app-logo', {
-            method: 'POST',
-            body: formData
-        });
-        const result = await res.json();
+    <main class="max-w-4xl mx-auto p-4 space-y-6 mt-4">
         
-        if (res.ok) {
-            alert('อัปเดตไอคอนแอปสำเร็จทั้ง 2 ขนาดเรียบร้อย!');
-        } else {
-            alert('เกิดข้อผิดพลาด: ' + result.detail);
+        <!-- กล่องแสดงสถิติภาพรวม -->
+        <div id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500">สมาชิกทั้งหมด</p>
+                <p id="stat-total" class="text-2xl font-bold text-purple-700 mt-1">-</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500">บุคคลธรรมดา</p>
+                <p id="stat-ind" class="text-2xl font-bold text-gray-800 mt-1">-</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500">นิติบุคคล</p>
+                <p id="stat-jur" class="text-2xl font-bold text-gray-800 mt-1">-</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500">ตำแหน่งงาน (Roles)</p>
+                <p id="stat-roles" class="text-2xl font-bold text-gray-800 mt-1">-</p>
+            </div>
+        </div>
+
+        <!-- เมนูทางลัดจัดการระบบ -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">เครื่องมือจัดการระบบ</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- เมนูที่ 1: จัดการสิทธิ์ -->
+                <a href="admin-roles.html" class="flex items-center p-4 rounded-xl border border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition group">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg group-hover:bg-purple-600 group-hover:text-white transition">🛡️</div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-gray-800">จัดการสิทธิ์และตำแหน่ง (RBAC)</h3>
+                        <p class="text-xs text-gray-500">เปิด-ปิดสิทธิ์การใช้งานเมนูต่างๆ ของแต่ละตำแหน่ง</p>
+                    </div>
+                </a>
+
+                <!-- เมนูที่ 2: เพิ่มฟิลด์ฐานข้อมูล -->
+                <a href="admin-fields.html" class="flex items-center p-4 rounded-xl border border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition group">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg group-hover:bg-purple-600 group-hover:text-white transition">🛠️</div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-gray-800">เพิ่มฟิลด์ข้อมูลสมาชิก</h3>
+                        <p class="text-xs text-gray-500">สร้างคอลัมน์ใหม่ใน MySQL อัตโนมัติ</p>
+                    </div>
+                </a>
+
+                <!-- เมนูที่ 3: บัญชีแยกประเภท (เตรียมพัฒนาต่อ) -->
+                <div class="flex items-center p-4 rounded-xl border border-gray-200 opacity-60 cursor-not-allowed">
+                    <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-lg">📊</div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-gray-800">บัญชีรายวัน เดบิต / เครดิต</h3>
+                        <p class="text-xs text-gray-500">ระบบสมุดบัญชีแยกประเภท (เร็วๆ นี้)</p>
+                    </div>
+                </div>
+
+                <!-- เมนูที่ 4: อนุมัติการเงิน (เตรียมพัฒนาต่อ) -->
+                <div class="flex items-center p-4 rounded-xl border border-gray-200 opacity-60 cursor-not-allowed">
+                    <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-lg">💰</div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-gray-800">อนุมัติการเงิน / คอมมิชชัน</h3>
+                        <p class="text-xs text-gray-500">ตรวจสอบและสั่งจ่ายผลประโยชน์ (เร็วๆ นี้)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- กล่องแจ้งเตือนสิทธิ์ (กรณีไม่ใช่แอดมิน) -->
+        <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-center">
+            ❌ คุณไม่มีสิทธิ์เข้าถึงหน้าผู้บริหารระบบนี้
+        </div>
+
+    </main>
+
+    <script>
+        const LIFF_ID = "2011278014-ykejPzwR";
+        let userLineId = null;
+
+        async function init() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    userLineId = profile.userId;
+                    document.getElementById('admin-name').innerText = `ผู้ดูแลระบบ: ${profile.displayName}`;
+                    loadStats();
+                } else {
+                    liff.login();
+                }
+            } catch(e) {
+                // สำหรับเทสต์นอก LINE
+                userLineId = "ADMIN_DEV_TEST";
+                loadStats();
+            }
         }
-    } catch (e) {
-        alert('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ');
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "อัปเดตไอคอนแอป";
-    }
-}
-</script>
+
+        async function loadStats() {
+            try {
+                const res = await fetch("https://tp-extra-system-production.up.railway.app/api/v1/admin/dashboard-stats", {
+                    headers: { "X-Line-User-Id": userLineId }
+                });
+                
+                if (!res.ok) throw new Error("Unauthorized");
+                
+                const data = await res.json();
+                document.getElementById('stat-total').innerText = data.total_users;
+                document.getElementById('stat-ind').innerText = data.total_individual;
+                document.getElementById('stat-jur').innerText = data.total_juristic;
+                document.getElementById('stat-roles').innerText = data.total_roles;
+            } catch (err) {
+                document.getElementById('stats-section').classList.add('hidden');
+                document.getElementById('error-box').classList.remove('hidden');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -149,6 +149,19 @@
                 submitBtn.classList.replace('bg-gray-400', 'bg-purple-600');
             }
         });
+        
+                    // ตรวจสอบว่าเป็นลิงก์เปิดรหัสบริษัทหรือไม่
+            const urlParams = new URLSearchParams(window.location.search);
+            const isGenesis = urlParams.get('role') === 'genesis';
+
+            if (isGenesis) {
+                // ซ่อนช่องผู้แนะนำและปลดล็อก required
+                const uplineInput = document.getElementById('upline-code');
+                const uplineBox = uplineInput.closest('div');
+                uplineBox.style.display = 'none';
+                uplineInput.removeAttribute('required');
+                uplineInput.value = 'COMPANY-ROOT';
+            }
 
         // เรียกใช้งานตอนเปิดหน้าเว็บ
         initializeLiff();

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP EXTRA - จัดการฟิลด์ฐานข้อมูล</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans">
+    <div class="max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm mt-6">
+        <h1 class="text-xl font-bold text-gray-800 mb-2">⚙️ เพิ่มฟิลด์ข้อมูลสมาชิก (Super Admin)</h1>
+        <p class="text-xs text-gray-500 mb-6">ฟิลด์ที่เพิ่มจะถูกสร้างเป็นคอลัมน์ใหม่ในฐานข้อมูล MySQL อัตโนมัติ</p>
+
+        <form id="field-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อฟิลด์ภาษาอังกฤษ (ห้ามเว้นวรรค) *</label>
+                <input type="text" id="field-name" required placeholder="เช่น tax_id หรือ branch_name" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อแสดงผลภาษาไทย (Label) *</label>
+                <input type="text" id="field-label" required placeholder="เช่น เลขประจำตัวผู้เสียภาษี" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทข้อมูล *</label>
+                <select id="field-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <option value="TEXT">ข้อความทั่วไป (Text / Varchar)</option>
+                    <option value="NUMBER">ตัวเลขจำนวนเต็ม (Number / ID)</option>
+                    <option value="DECIMAL">ตัวเลขทศนิยม / จำนวนเงิน (Decimal)</option>
+                    <option value="DATE">วันที่ (Date)</option>
+                    <option value="BOOLEAN">เปิด/ปิด (Yes / No)</option>
+                </select>
+            </div>
+
+            <div class="flex items-center mt-2">
+                <input type="checkbox" id="is-required" class="w-4 h-4 text-purple-600 rounded">
+                <label for="is-required" class="ml-2 text-sm text-gray-700">บังคับกรอกข้อมูลนี้ (Required)</label>
+            </div>
+
+            <button type="submit" id="btn-save" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition duration-200 mt-4 shadow">
+                + สั่งสร้างฟิลด์ใน MySQL
+            </button>
+        </form>
+
+        <div id="result-msg" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+    </div>
+
+    <script>
+        const LIFF_ID = "2011278014-ykejPzwR";
+        let userLineId = null;
+
+        async function init() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    userLineId = profile.userId;
+                } else {
+                    liff.login();
+                }
+            } catch(e) {
+                console.log("เข้าโหมดเบราว์เซอร์ปกติ");
+            }
+        }
+
+        document.getElementById('field-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save');
+            const resultMsg = document.getElementById('result-msg');
+            
+            btn.disabled = true;
+            btn.innerText = "กำลังสร้างคอลัมน์ใน MySQL...";
+
+            const payload = {
+                table_name: "users",
+                field_name: document.getElementById('field-name').value.trim(),
+                field_label: document.getElementById('field-label').value.trim(),
+                field_type: document.getElementById('field-type').value,
+                is_required: document.getElementById('is-required').checked
+            };
+
+            try {
+                const res = await fetch("https://tp-extra-system-production.up.railway.app/api/v1/admin/add-field", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Line-User-Id": userLineId || "ADMIN_DEV_TEST"
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                resultMsg.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                if (res.ok) {
+                    resultMsg.classList.add('bg-green-100', 'text-green-700');
+                    resultMsg.innerText = `✅ ${data.message}`;
+                    document.getElementById('field-form').reset();
+                } else {
+                    resultMsg.classList.add('bg-red-100', 'text-red-700');
+                    resultMsg.innerText = `❌ ${data.detail}`;
+                }
+            } catch (err) {
+                resultMsg.classList.remove('hidden');
+                resultMsg.classList.add('bg-red-100', 'text-red-700');
+                resultMsg.innerText = "❌ ติดต่อเซิร์ฟเวอร์ไม่ได้";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "+ สั่งสร้างฟิลด์ใน MySQL";
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
