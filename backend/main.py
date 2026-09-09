@@ -209,3 +209,11 @@ async def upload_app_logo(file: UploadFile = File(...)):
             "512": url_512
         }
     }
+except Exception as e:
+        conn.rollback()
+        import traceback
+        print("DATABASE ERROR TRACEBACK:", traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database/Server Error: {str(e)}"
+        )
