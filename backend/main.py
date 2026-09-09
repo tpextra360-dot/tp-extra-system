@@ -217,4 +217,20 @@ except Exception as e:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database/Server Error: {str(e)}"
         )
-        
+# ป้องกันระบบแครชหากไม่มีไฟล์ firebase-key.json บนเซิร์ฟเวอร์
+if not firebase_admin._apps:
+    firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
+    if not os.path.exists(firebase_key_path):
+        firebase_key_path = "firebase-key.json"
+
+    if os.path.exists(firebase_key_path):
+        try:
+            cred = credentials.Certificate(firebase_key_path)
+            firebase_admin.initialize_app(cred, {
+                "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
+            })
+            print("Firebase initialized successfully.")
+        except Exception as e:
+            print(f"Firebase Init Error: {e}")
+    else:
+        print("Warning: Firebase key not found. Skipping Firebase initialization.")
