@@ -1,5 +1,6 @@
 import io
 import os
+import json
 import random
 import string
 import traceback
@@ -41,26 +42,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. ป้องกันระบบแครชและตั้งค่า Firebase ครั้งเดียวตอนเริ่มรันแอป
+# 2. ป้องกันระบบแครชและตั้งค่า Firebase รองรับทั้งไฟล์และตัวแปร
 firebase_initialized = False
 if not firebase_admin._apps:
-    # เช็คหาไฟล์คีย์ทั้งในโฟลเดอร์ backend/ และ root/
-    firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
-    if not os.path.exists(firebase_key_path):
-        firebase_key_path = "firebase-key.json"
-
-    if os.path.exists(firebase_key_path):
-        try:
-            cred = credentials.Certificate(firebase_key_path)
+    try:
+        # วิธีที่ 1: ดึงกุญแจจาก Environment Variable บน Railway (ไม่ต้องใช้ไฟล์)
+        firebase_creds_str = os.getenv("FIREBASE_CREDENTIALS")
+        
+        if firebase_creds_str:
+            # แปลงข้อความ JSON ให้เป็น Dictionary
+            cred_dict = json.loads(firebase_creds_str)
+            cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred, {
                 "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
             })
             firebase_initialized = True
-            print("✅ Firebase initialized successfully.")
-        except Exception as e:
-            print(f"❌ Firebase Init Error: {e}")
-    else:
-        print("⚠️ Warning: Firebase key not found. Skipping Firebase initialization.")
+            print("✅ Firebase initialized successfully from Environment Variable.")
+        else:
+            # วิธีที่ 2: หาไฟล์ในเครื่อง (สำหรับตอนรันทดสอบในคอมพิวเตอร์เราเอง)
+            firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
+            if not os.path.exists(firebase_key_path):
+                firebase_key_path = "firebase-key.json"
+
+            if os.path.exists(firebase_key_path):
+                cred = credentials.Certificate(firebase_key_path)
+                firebase_admin.initialize_app(cred, {
+                    "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
+                })
+                firebase_initialized = True
+                print("✅ Firebase initialized successfully from File.")
+            else:
+                print("⚠️ Warning: Firebase key not found. Skipping Firebase initialization.")
+    except Exception as e:
+        print(f"❌ Firebase Init Error: {e}")
 
 # 3. Pydantic Schemas
 class UserRegisterRequest(BaseModel):
@@ -91,7 +105,7 @@ def process_and_upload(image_bytes: bytes, size: int) -> str:
     if not firebase_admin._apps:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
-            detail="Firebase Storage ยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์ ขาดไฟล์ firebase-key.json"
+            detail="Firebase Storage ยังไม่พร้อมใช้งาน (กรุณาตรวจสอบ FIREBASE_CREDENTIALS)"
         )
     with Image.open(io.BytesIO(image_bytes)) as img:
         img = img.convert("RGBA")
