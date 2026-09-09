@@ -2,6 +2,7 @@ import io
 import os
 import random
 import string
+import traceback
 from datetime import date
 from decimal import Decimal
 from typing import List, Optional
@@ -13,7 +14,7 @@ from firebase_admin import credentials, storage
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
 
-# นำเข้าฟังก์ชันเชื่อมต่อฐานข้อมูล
+# รองรับการ Import ฐานข้อมูลทั้งแบบรันในโฟลเดอร์นอกและใน
 try:
     from backend.database import get_db_connection
 except ImportError:
@@ -40,9 +41,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. ป้องกันระบบแครชหากไม่มีไฟล์ firebase-key.json บนเซิร์ฟเวอร์
+# 2. ป้องกันระบบแครชและตั้งค่า Firebase ครั้งเดียวตอนเริ่มรันแอป
 firebase_initialized = False
 if not firebase_admin._apps:
+    # เช็คหาไฟล์คีย์ทั้งในโฟลเดอร์ backend/ และ root/
     firebase_key_path = os.getenv("FIREBASE_KEY_PATH", "backend/firebase-key.json")
     if not os.path.exists(firebase_key_path):
         firebase_key_path = "firebase-key.json"
@@ -54,11 +56,11 @@ if not firebase_admin._apps:
                 "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "your-project-id.appspot.com")
             })
             firebase_initialized = True
-            print("Firebase initialized successfully.")
+            print("✅ Firebase initialized successfully.")
         except Exception as e:
-            print(f"Firebase Init Error: {e}")
+            print(f"❌ Firebase Init Error: {e}")
     else:
-        print("Warning: Firebase key not found. Skipping Firebase initialization.")
+        print("⚠️ Warning: Firebase key not found. Skipping Firebase initialization.")
 
 # 3. Pydantic Schemas
 class UserRegisterRequest(BaseModel):
@@ -79,6 +81,8 @@ class PaperMemberItem(BaseModel):
 class BulkImportRequest(BaseModel):
     members: List[PaperMemberItem]
 
+# --- Helper Functions ---
+
 def generate_member_code():
     random_str = ''.join(random.choices(string.digits, k=5))
     return f"TPX-{random_str}"
@@ -87,7 +91,7 @@ def process_and_upload(image_bytes: bytes, size: int) -> str:
     if not firebase_admin._apps:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
-            detail="Firebase Storage ยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์"
+            detail="Firebase Storage ยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์ ขาดไฟล์ firebase-key.json"
         )
     with Image.open(io.BytesIO(image_bytes)) as img:
         img = img.convert("RGBA")
@@ -106,10 +110,11 @@ def process_and_upload(image_bytes: bytes, size: int) -> str:
 
 @app.get("/")
 def read_root():
-    return {"message": "TP EXTRA Backend is running on Railway!"}
+    return {"message": "TP EXTRA Backend is running optimally on Railway!"}
 
 @app.post("/api/upload-slip")
 async def upload_slip(file: UploadFile = File(...)):
+    # จำลองส่งต่อผลการตรวจสลิป
     return {
         "status": "success",
         "ai_result": {
@@ -127,10 +132,12 @@ def register_member(req: UserRegisterRequest):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # เช็คเบอร์ซ้ำ
             cursor.execute("SELECT id FROM users WHERE phone_number = %s", (req.phone_number,))
             if cursor.fetchone():
                 raise HTTPException(status_code=400, detail="เบอร์โทรศัพท์นี้ลงทะเบียนแล้ว")
 
+            # เช็คผู้แนะนำ
             upline_id = None
             if req.upline_member_code:
                 cursor.execute("SELECT id FROM users WHERE member_code = %s", (req.upline_member_code,))
@@ -158,12 +165,17 @@ def register_member(req: UserRegisterRequest):
 
             conn.commit()
             return {"status": "success", "message": "สมัครสมาชิกเรียบร้อย", "member_code": member_code}
+            
     except HTTPException:
         conn.rollback()
         raise
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Database/Server Error: {str(e)}")
+        print("DATABASE ERROR TRACEBACK:", traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database/Server Error: {str(e)}"
+        )
     finally:
         conn.close()
 
@@ -201,9 +213,14 @@ def bulk_import_paper_members(req: BulkImportRequest):
             
             conn.commit()
             return {"status": "success", "imported_count": len(results), "details": results}
+            
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Database/Server Error: {str(e)}")
+        print("DATABASE ERROR TRACEBACK:", traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database/Server Error: {str(e)}"
+        )
     finally:
         conn.close()
 
