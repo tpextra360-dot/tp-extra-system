@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TP EXTRA - เปลี่ยนโลโก้ระบบ</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เรียกใช้ไฟล์ manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- กำหนดสีแถบด้านบนของมือถือ (Theme Color) -->
+<meta name="theme-color" content="#8b5cf6">
+
+<!-- รองรับไอคอนสำหรับ iOS (Apple แอบเรื่องมากนิดนึงครับ) -->
+<link rel="apple-touch-icon" href="assets/icon-192x192.png">
 </head>
 <body class="bg-gray-100 p-6 font-sans">
     <div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-sm mt-6">
@@ -61,6 +69,7 @@
                 btn.innerText = "อัปเดตโลโก้ใหม่ทันที";
             }
         });
-    </script>
+    
+<script src="auth.js"></script>
 </body>
 </html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>หน้าหลัก - TP EXTRA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    
+    <!-- แอนิเมชันตอนโหลด -->
+    <style>
+        .skeleton { background: #e2e8f0; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20 font-sans text-gray-800 select-none">
+
+    <!-- แถบด้านบน & โปรไฟล์ -->
+    <div class="bg-white p-5 rounded-b-[30px] shadow-sm mb-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-black text-purple-700 tracking-tighter">TP EXTRA</h1>
+            <button class="text-gray-400 active:text-purple-600 transition">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <img id="profileImage" src="https://via.placeholder.com/150" alt="Profile" class="w-14 h-14 rounded-full border-2 border-purple-100 object-cover skeleton">
+            <div>
+                <p class="text-xs text-gray-500 mb-0.5">สวัสดี,</p>
+                <h2 id="displayName" class="text-lg font-bold text-gray-800 leading-tight">กำลังโหลด...</h2>
+                <p id="memberCode" class="text-xs font-semibold text-purple-600 bg-purple-100 inline-block px-2 py-0.5 rounded-full mt-1">TPX-XXXXX</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- บัตรกระเป๋าเงิน (Wallet Card) -->
+    <div class="px-5 mb-6">
+        <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-purple-200 relative overflow-hidden">
+            <!-- ลวดลายพื้นหลังบัตร -->
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+            <div class="absolute right-10 -bottom-10 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+            
+            <p class="text-sm text-purple-100 font-medium mb-1">ยอดเงินคงเหลือ (พอยท์)</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-bold tracking-tight" id="walletBalance">--.---</span>
+                <span class="text-lg text-purple-200">฿</span>
+            </div>
+            
+            <!-- ปุ่ม Action ด่วนบนบัตร -->
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button onclick="window.location.href='transfer.html'" class="bg-white bg-opacity-20 hover:bg-opacity-30 active:scale-95 transition rounded-xl py-2.5 flex items-center justify-center gap-2 backdrop-blur-sm font-semibold text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    โอนเงิน
+                </button>
+                <button onclick="alert('ระบบเติมเงินกำลังพัฒนา')" class="bg-white text-purple-700 active:scale-95 transition rounded-xl py-2.5 flex items-center justify-center gap-2 font-bold text-sm shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    เติมเงิน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- เมนูบริการอื่นๆ (Service Grid) -->
+    <div class="px-5">
+        <h3 class="text-sm font-bold text-gray-800 mb-4">บริการของ TP EXTRA</h3>
+        <div class="grid grid-cols-4 gap-4 text-center">
+            
+            <!-- เมนู 1: เชิญเพื่อน -->
+            <button onclick="window.location.href='share.html'" class="flex flex-col items-center gap-2 active:scale-95 transition">
+                <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 shadow-sm">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                </div>
+                <span class="text-[11px] font-semibold text-gray-600">เชิญเพื่อน</span>
+            </button>
+
+            <!-- เมนู 2: ตั้งรหัส PIN -->
+            <button onclick="window.location.href='set-pin.html'" class="flex flex-col items-center gap-2 active:scale-95 transition">
+                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <span class="text-[11px] font-semibold text-gray-600">รหัส PIN</span>
+            </button>
+
+            <!-- เมนู 3: ประวัติ (จำลอง) -->
+            <button onclick="alert('กำลังพัฒนาระบบประวัติ')" class="flex flex-col items-center gap-2 active:scale-95 transition">
+                <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 shadow-sm">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </div>
+                <span class="text-[11px] font-semibold text-gray-600">ประวัติ</span>
+            </button>
+
+            <!-- เมนู 4: สินค้า (จำลอง) -->
+            <button onclick="alert('กำลังพัฒนาระบบร้านค้า')" class="flex flex-col items-center gap-2 active:scale-95 transition">
+                <div class="w-14 h-14 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 shadow-sm">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                </div>
+                <span class="text-[11px] font-semibold text-gray-600">ร้านค้า</span>
+            </button>
+            
+        </div>
+    </div>
+
+    <!-- Script จัดการข้อมูล -->
+    <script src="auth.js"></script>
+    <script>
+        const API_URL = "https://tp-extra-system-production.up.railway.app";
+        const LIFF_ID_DASHBOARD = "2011278014-ykejPzwR"; // ใช้ LIFF ID ของคุณ
+
+        async function initDashboard() {
+            try {
+                // 1. โหลดข้อมูลจาก LINE (รูปภาพ + ชื่อ LINE)
+                await liff.init({ liffId: LIFF_ID_DASHBOARD });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    document.getElementById('profileImage').src = profile.pictureUrl || 'https://via.placeholder.com/150';
+                    document.getElementById('profileImage').classList.remove('skeleton');
+                }
+
+                // 2. ดึง Token เพื่อไปขอข้อมูลการเงินจาก Backend
+                const token = localStorage.getItem("tpx_access_token");
+                if (!token) {
+                    window.location.href = "index.html"; // ถ้าไม่มี Token ให้กลับไปหน้าแรก
+                    return;
+                }
+
+                const res = await fetch(`${API_URL}/api/v1/users/me`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // อัปเดตข้อมูลบนหน้าจอ
+                    document.getElementById('displayName').innerText = data.full_name;
+                    document.getElementById('memberCode').innerText = data.member_code;
+                    
+                    // แปลงยอดเงินให้มีจุลภาคและทศนิยม 2 ตำแหน่ง
+                    const balance = parseFloat(data.balance);
+                    document.getElementById('walletBalance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2});
+                } else {
+                    // Token อาจจะหมดอายุ
+                    localStorage.removeItem("tpx_access_token");
+                    alert("เซสชันหมดอายุ กรุณาล็อกอินใหม่");
+                    window.location.href = "index.html";
+                }
+
+            } catch (error) {
+                console.error("Dashboard Init Error:", error);
+                document.getElementById('displayName').innerText = "โหลดข้อมูลไม่สำเร็จ";
+            }
+        }
+
+        // เริ่มทำงานเมื่อเปิดหน้า
+        initDashboard();
+    </script>
+
+        <!-- ========================================== -->
+    <!-- Bottom Navigation Bar (แถบเมนูด้านล่าง) -->
+    <!-- ========================================== -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-between items-center pb-[env(safe-area-inset-bottom)] px-2 shadow-[0_-5px_15px_rgba(0,0,0,0.03)] z-50 rounded-t-2xl">
+        
+        <!-- 1. เมนูหน้าหลัก (Dashboard) -->
+        <!-- เปลี่ยนสีไอคอนให้เป็น Active: ใช้ text-purple-600, ถ้า Inactive: ใช้ text-gray-400 -->
+        <a href="dashboard.html" class="flex-1 flex flex-col items-center py-3 text-purple-600 active:bg-gray-50 rounded-2xl transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- ไอคอน Home -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="text-[10px] font-bold">หน้าหลัก</span>
+        </a>
+
+        <!-- 2. เมนูประวัติ (History) -->
+        <a href="history.html" class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-500 active:bg-gray-50 rounded-2xl transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- ไอคอน Document/History -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span class="text-[10px] font-bold">ประวัติ</span>
+        </a>
+
+        <!-- 3. เมนูรับเงิน/QR Code (Share) -->
+        <div class="flex-1 flex justify-center -mt-8 relative">
+            <a href="share.html" class="bg-purple-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-purple-300 border-4 border-gray-50 active:scale-95 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- ไอคอน QR / สแกน -->
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                </svg>
+            </a>
+            <span class="absolute -bottom-4 text-[10px] font-bold text-gray-500">รับเงิน</span>
+        </div>
+
+        <!-- 4. เมนูตั้งค่า/โปรไฟล์ (Profile) -->
+        <a href="profile.html" class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-500 active:bg-gray-50 rounded-2xl transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- ไอคอน User -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="text-[10px] font-bold">ฉัน</span>
+        </a>
+
+    </div>
+    <!-- ========================================== -->
+
+    <script src="auth.js"></script>
+    </body>
+</html>

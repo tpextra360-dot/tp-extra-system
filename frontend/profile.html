@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>โปรไฟล์ของฉัน - TP EXTRA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <style>
+        .skeleton { background: #e2e8f0; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800 pb-10 select-none">
+
+    <!-- แถบด้านบน -->
+    <div class="bg-purple-600 text-white p-4 shadow-md sticky top-0 z-10 flex items-center justify-between">
+        <button onclick="window.location.href='dashboard.html'" class="p-2 active:bg-purple-700 rounded-full transition -ml-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <h1 class="text-lg font-bold tracking-wide">โปรไฟล์ของฉัน</h1>
+        <div class="w-10"></div> <!-- เว้นเพื่อความสมดุล -->
+    </div>
+
+    <!-- ส่วนหัวโปรไฟล์ -->
+    <div class="bg-white px-6 pt-8 pb-6 shadow-sm rounded-b-3xl text-center mb-6">
+        <div class="relative inline-block mb-3">
+            <img id="profileImage" src="https://via.placeholder.com/150" alt="Profile" class="w-24 h-24 rounded-full border-4 border-purple-100 object-cover shadow-sm mx-auto skeleton">
+            <!-- ไอคอนสถานะมุมขวาล่างรูป -->
+            <div class="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+        </div>
+        <h2 id="displayName" class="text-xl font-bold text-gray-800">กำลังโหลด...</h2>
+        <p id="memberCode" class="text-sm font-semibold text-purple-600 mt-1">TPX-XXXXX</p>
+    </div>
+
+    <!-- เมนูตั้งค่าและข้อมูล -->
+    <div class="px-5 max-w-md mx-auto">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            
+            <!-- ข้อมูลบัญชี -->
+            <div class="p-4 flex items-center border-b border-gray-50">
+                <div class="bg-purple-50 p-2 rounded-xl text-purple-600 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-gray-400 font-semibold mb-0.5">ชื่อ-นามสกุล (ตามบัตร)</p>
+                    <p id="fullName" class="text-sm font-bold text-gray-800">กำลังโหลด...</p>
+                </div>
+            </div>
+
+            <!-- เปลี่ยนรหัส PIN -->
+            <button onclick="window.location.href='set-pin.html'" class="w-full p-4 flex items-center border-b border-gray-50 active:bg-gray-50 transition">
+                <div class="bg-blue-50 p-2 rounded-xl text-blue-600 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <div class="flex-1 text-left">
+                    <p class="text-sm font-bold text-gray-800">เปลี่ยนรหัส PIN (6 หลัก)</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+
+            <!-- อัปเกรดสถานะ (จำลอง) -->
+            <button onclick="alert('ระบบลงทะเบียนร้านค้ากำลังพัฒนา')" class="w-full p-4 flex items-center active:bg-gray-50 transition">
+                <div class="bg-orange-50 p-2 rounded-xl text-orange-600 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div class="flex-1 text-left">
+                    <p class="text-sm font-bold text-gray-800">อัปเกรดเป็นสมาชิกร้านค้า</p>
+                    <p class="text-xs text-gray-400">สำหรับรับชำระค่าสินค้าและบริการ</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+            
+        </div>
+
+        <!-- ปุ่มออกจากระบบ -->
+        <button onclick="handleLogout()" class="w-full bg-white border border-red-200 text-red-500 font-bold py-3.5 rounded-2xl hover:bg-red-50 active:scale-95 transition shadow-sm flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            ออกจากระบบ
+        </button>
+
+        <p class="text-center text-xs text-gray-400 mt-6">TP EXTRA SYSTEM V1.0</p>
+    </div>
+
+    <!-- เรียกใช้ระบบตรวจสิทธิ์ -->
+    <script src="auth.js"></script>
+
+    <script>
+        const API_URL = "https://tp-extra-system-production.up.railway.app";
+        const LIFF_ID_PROFILE = "2011278014-ykejPzwR"; // ใช้ LIFF ID ของคุณ
+
+        async function initProfile() {
+            try {
+                // 1. โหลดข้อมูลรูปจาก LINE
+                await liff.init({ liffId: LIFF_ID_PROFILE });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    document.getElementById('profileImage').src = profile.pictureUrl || 'https://via.placeholder.com/150';
+                    document.getElementById('profileImage').classList.remove('skeleton');
+                }
+
+                // 2. โหลดข้อมูลจาก Backend
+                const token = localStorage.getItem("tpx_access_token");
+                if (!token) return;
+
+                const response = await fetch(`${API_URL}/api/v1/users/me`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('displayName').innerText = data.full_name;
+                    document.getElementById('fullName').innerText = data.full_name;
+                    document.getElementById('memberCode').innerText = data.member_code;
+                }
+            } catch (error) {
+                console.error("Profile Error:", error);
+            }
+        }
+
+        // ฟังก์ชันออกจากระบบ
+        function handleLogout() {
+            Swal.fire({
+                title: 'ยืนยันการออกจากระบบ?',
+                text: "คุณจะต้องเข้าสู่ระบบใหม่ในครั้งถัดไป",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444', // สีแดง
+                cancelButtonColor: '#d1d5db',
+                confirmButtonText: 'ใช่, ออกจากระบบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 1. ลบ Token ใน LocalStorage
+                    localStorage.removeItem("tpx_access_token");
+                    
+                    // 2. สั่ง Logout ออกจาก LINE LIFF (ถ้าใช้งานผ่านเบราว์เซอร์ภายนอก)
+                    if (liff.isLoggedIn()) {
+                        liff.logout();
+                    }
+                    
+                    // 3. เด้งกลับหน้าแรก
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // โหลดข้อมูลเมื่อเปิดหน้า
+        initProfile();
+    </script>
+</body>
+</html>

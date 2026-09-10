@@ -16,6 +16,14 @@
         }
         .laser-line { animation: scan 2s infinite linear; }
     </style>
+    <!-- เรียกใช้ไฟล์ manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- กำหนดสีแถบด้านบนของมือถือ (Theme Color) -->
+<meta name="theme-color" content="#8b5cf6">
+
+<!-- รองรับไอคอนสำหรับ iOS (Apple แอบเรื่องมากนิดนึงครับ) -->
+<link rel="apple-touch-icon" href="assets/icon-192x192.png">
 </head>
 <body class="bg-gray-100 h-screen flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden">
 
@@ -87,5 +95,6 @@
 
     </div>
 
+<script src="auth.js"></script>
 </body>
 </html>

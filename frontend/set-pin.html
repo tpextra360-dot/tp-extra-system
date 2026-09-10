@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ตั้งรหัส PIN - TP EXTRA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    
+    <style>
+        .pin-dot {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            transition: all 0.2s ease-in-out;
+        }
+        .pin-dot.filled {
+            background-color: #8b5cf6;
+            transform: scale(1.15);
+        }
+        /* แอนิเมชันสั่นเมื่อกรอกรหัสผิด */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col font-sans select-none">
+    
+    <!-- แถบด้านบน -->
+    <div class="bg-white text-gray-800 p-4 sticky top-0 z-10 flex items-center justify-between border-b border-gray-100">
+        <button onclick="window.history.back()" class="p-2 active:bg-gray-100 rounded-full transition text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <h1 class="text-lg font-bold">ตั้งรหัสความปลอดภัย</h1>
+        <div class="w-10"></div> <!-- ไว้ดุนให้ title อยู่ตรงกลาง -->
+    </div>
+
+    <!-- พื้นที่แสดงผลด้านบน -->
+    <div class="flex-1 flex flex-col items-center justify-center p-6">
+        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        
+        <h2 id="instructionTitle" class="text-2xl font-bold text-gray-800 mb-2">ตั้งรหัส PIN 6 หลัก</h2>
+        <p id="instructionSub" class="text-sm text-gray-500 mb-8 text-center">รหัสนี้จะใช้สำหรับยืนยันการทำธุรกรรมทางการเงิน<br>และเข้าถึงกระเป๋าเงินของคุณ</p>
+
+        <!-- จุดไข่ปลา PIN -->
+        <div class="flex justify-center gap-4 mb-8" id="pinContainer">
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+        </div>
+    </div>
+
+    <!-- แป้นพิมพ์ตัวเลขด้านล่าง -->
+    <div class="bg-gray-50 rounded-t-3xl p-6 pb-10 border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+        <div class="grid grid-cols-3 gap-x-4 gap-y-4 max-w-xs mx-auto">
+            <button onclick="pressKey('1')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">1</button>
+            <button onclick="pressKey('2')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">2</button>
+            <button onclick="pressKey('3')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">3</button>
+            <button onclick="pressKey('4')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">4</button>
+            <button onclick="pressKey('5')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">5</button>
+            <button onclick="pressKey('6')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">6</button>
+            <button onclick="pressKey('7')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">7</button>
+            <button onclick="pressKey('8')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">8</button>
+            <button onclick="pressKey('9')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">9</button>
+            
+            <div></div> <!-- ช่องว่างซ้ายล่าง -->
+            <button onclick="pressKey('0')" class="h-16 rounded-full bg-white shadow-sm text-2xl font-semibold active:bg-purple-100 active:text-purple-700 transition">0</button>
+            <button onclick="pressKey('del')" class="h-16 rounded-full text-gray-600 active:bg-gray-200 transition flex justify-center items-center">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- เรียกระบบยืนยันตัวตน -->
+    <script src="auth.js"></script>
+
+    <script>
+        const API_URL = "https://tp-extra-system-production.up.railway.app";
+        let step = 1; // 1 = ตั้งรหัสใหม่, 2 = ยืนยันรหัส
+        let firstPin = "";
+        let currentPin = "";
+
+        function pressKey(key) {
+            if (key === 'del') {
+                currentPin = currentPin.slice(0, -1);
+            } else {
+                if (currentPin.length < 6) {
+                    currentPin += key;
+                }
+            }
+            
+            updatePinDots();
+
+            if (currentPin.length === 6) {
+                // หน่วงเวลาเล็กน้อยให้ผู้ใช้เห็นว่าจุดที่ 6 ถูกระบายสีแล้ว
+                setTimeout(handlePinComplete, 200);
+            }
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < currentPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function handlePinComplete() {
+            if (step === 1) {
+                // จบรอบแรก เก็บค่าไว้ แล้วให้ยืนยันอีกรอบ
+                firstPin = currentPin;
+                currentPin = "";
+                step = 2;
+                
+                // เปลี่ยนข้อความบนจอ
+                document.getElementById('instructionTitle').innerText = "ยืนยันรหัส PIN อีกครั้ง";
+                document.getElementById('instructionSub').innerText = "กรุณากดรหัส 6 หลักเดิมเพื่อยืนยันความถูกต้อง";
+                document.getElementById('instructionTitle').classList.add('text-purple-700');
+                
+                updatePinDots(); // ล้างจุดไข่ปลา
+            } else if (step === 2) {
+                // จบรอบสอง เช็คว่าตรงกับรอบแรกไหม
+                if (currentPin === firstPin) {
+                    savePinToServer(currentPin);
+                } else {
+                    // รหัสไม่ตรงกัน แอนิเมชันสั่นเตือน แล้วรีเซ็ตใหม่หมด
+                    const pinContainer = document.getElementById('pinContainer');
+                    pinContainer.classList.add('shake-animation');
+                    setTimeout(() => pinContainer.classList.remove('shake-animation'), 400);
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'รหัสไม่ตรงกัน',
+                        text: 'กรุณาตั้งรหัสใหม่อีกครั้งตั้งแต่ต้น',
+                        confirmButtonColor: '#8b5cf6'
+                    }).then(() => {
+                        resetProcess();
+                    });
+                }
+            }
+        }
+
+        function resetProcess() {
+            step = 1;
+            firstPin = "";
+            currentPin = "";
+            document.getElementById('instructionTitle').innerText = "ตั้งรหัส PIN 6 หลัก";
+            document.getElementById('instructionTitle').classList.remove('text-purple-700');
+            document.getElementById('instructionSub').innerHTML = "รหัสนี้จะใช้สำหรับยืนยันการทำธุรกรรมทางการเงิน<br>และเข้าถึงกระเป๋าเงินของคุณ";
+            updatePinDots();
+        }
+
+        async function savePinToServer(finalPin) {
+            const token = localStorage.getItem("tpx_access_token");
+            if (!token) {
+                Swal.fire('เซสชันหมดอายุ', 'กรุณาล็อกอินใหม่', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'กำลังบันทึกรหัสลับ...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/api/v1/wallets/set-pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ pin: finalPin })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ตั้งรหัสสำเร็จ!',
+                        text: 'คุณสามารถใช้รหัสนี้ทำธุรกรรมได้ทันที',
+                        confirmButtonColor: '#8b5cf6'
+                    }).then(() => {
+                        window.location.href = 'index.html'; // หรือเด้งไปหน้า Wallet
+                    });
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', result.detail || 'ไม่สามารถบันทึกรหัสได้', 'error').then(resetProcess);
+                }
+            } catch (err) {
+                console.error("Save PIN error:", err);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error').then(resetProcess);
+            }
+        }
+    </script>
+</body>
+</html>

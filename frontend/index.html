@@ -8,13 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- นำเข้า LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- เรียกใช้ไฟล์ manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="assets/icon-192x192.png">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
 
     <!-- แถบเมนูด้านบน -->
     <nav class="bg-purple-700 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="text-xl font-bold">TP EXTRA</h1>
-        <div id="profile-img-container" class="w-10 h-10 rounded-full bg-purple-500 overflow-hidden hidden">
+        <h1 class="text-xl font-bold tracking-wide">TP EXTRA</h1>
+        <div id="profile-img-container" class="w-10 h-10 rounded-full bg-purple-500 overflow-hidden hidden shadow-sm border-2 border-purple-400">
             <img id="profile-img" src="" alt="Profile" class="w-full h-full object-cover">
         </div>
     </nav>
@@ -22,55 +28,59 @@
     <main class="p-4 max-w-md mx-auto space-y-6 mt-4">
         
         <!-- ส่วนแสดงข้อมูลต้อนรับ -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 text-center">
-            <h2 class="text-lg text-gray-600">ยินดีต้อนรับ</h2>
-            <p id="user-name" class="text-2xl font-bold text-gray-800 mt-1">กำลังโหลดข้อมูล...</p>
+        <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-gray-100">
+            <h2 class="text-lg text-gray-500 font-medium">ยินดีต้อนรับ</h2>
+            <p id="user-name" class="text-2xl font-bold text-purple-700 mt-1">กำลังเชื่อมต่อ LINE...</p>
         </div>
 
-        <!-- ฟอร์มลงทะเบียน (จะซ่อนไว้ถ้าระบบเช็คว่าสมัครแล้วในอนาคต) -->
-        <div id="register-section" class="bg-white rounded-2xl shadow-sm p-6">
+        <!-- กล่อง Loading (แสดงระหว่างตรวจสอบสถานะการสมัคร) -->
+        <div id="loading-section" class="text-center py-10">
+            <svg class="w-10 h-10 mx-auto animate-spin text-purple-600 mb-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="text-gray-500 font-medium">กำลังตรวจสอบข้อมูลสมาชิก...</p>
+        </div>
+
+        <!-- ฟอร์มลงทะเบียน (ถูกซ่อนไว้ จะแสดงก็ต่อเมื่อยังไม่ได้เป็นสมาชิก) -->
+        <div id="register-section" class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hidden">
             <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">ลงทะเบียนสายงาน</h3>
             
             <form id="register-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล (ตามจริง)</label>
-                    <input type="text" id="full-name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="สมชาย ใจดี">
+                    <input type="text" id="full-name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition" placeholder="สมชาย ใจดี">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ (10 หลัก)</label>
-                    <input type="tel" id="phone" required pattern="[0-9]{9,10}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="0812345678">
+                    <input type="tel" id="phone" required pattern="[0-9]{9,10}" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition" placeholder="0812345678">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">วัน/เดือน/ปีเกิด</label>
-                    <input type="date" id="birth-date" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <input type="date" id="birth-date" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผู้แนะนำ (Upline Code)</label>
-                    <input type="text" id="upline-code" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="เช่น TPX-12345 (ถ้ามี)">
+                    <input type="text" id="upline-code" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none uppercase transition font-bold" placeholder="เช่น TPX-12345 (ถ้ามี)">
                 </div>
 
-                <div class="flex items-start mt-4">
-                    <input type="checkbox" id="consent" required class="mt-1 mr-2 w-4 h-4 text-purple-600 rounded">
-                    <label for="consent" class="text-sm text-gray-600">ข้าพเจ้ายืนยันว่ามีอายุครบเกณฑ์ตามกฎหมาย และยอมรับเงื่อนไขการใช้งานระบบ</label>
+                <div class="flex items-start mt-4 bg-gray-50 p-3 rounded-xl">
+                    <input type="checkbox" id="consent" required class="mt-1 mr-3 w-5 h-5 text-purple-600 rounded">
+                    <label for="consent" class="text-xs text-gray-600 leading-relaxed">ข้าพเจ้ายืนยันว่ามีอายุครบเกณฑ์ตามกฎหมาย และยอมรับเงื่อนไขการใช้งานระบบ TP EXTRA</label>
                 </div>
 
-                <button type="submit" id="submit-btn" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition duration-200 mt-4 shadow-md">
+                <button type="submit" id="submit-btn" class="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 transition duration-200 mt-4 shadow-lg shadow-purple-200 active:scale-95 text-lg">
                     ยืนยันการลงทะเบียน
                 </button>
             </form>
-
-            <!-- กล่องแสดงผลลัพธ์ -->
-            <div id="result-box" class="hidden mt-4 p-4 rounded-lg text-sm font-medium text-center"></div>
         </div>
-
     </main>
 
     <script>
-        const LIFF_ID = "2011278014-ykejPzwR";
+        const LIFF_ID = "2011278014-ykejPzwR"; // LIFF ID ของคุณ
+        const API_URL = "https://tp-extra-system-production.up.railway.app";
         let lineUserId = null;
+        let lineDisplayName = "";
 
         // 1. เริ่มต้นการทำงาน LIFF
         async function initializeLiff() {
@@ -79,48 +89,98 @@
                 if (liff.isLoggedIn()) {
                     const profile = await liff.getProfile();
                     lineUserId = profile.userId;
+                    lineDisplayName = profile.displayName;
                     
-                    // แสดงชื่อและรูปโปรไฟล์
+                    // แสดงชื่อและรูป
                     document.getElementById('user-name').innerText = profile.displayName;
                     if(profile.pictureUrl) {
                         const imgContainer = document.getElementById('profile-img-container');
-                        const img = document.getElementById('profile-img');
-                        img.src = profile.pictureUrl;
+                        document.getElementById('profile-img').src = profile.pictureUrl;
                         imgContainer.classList.remove('hidden');
                     }
+
+                    // 👉 ตรวจสอบว่าเคยสมัครสมาชิกหรือยัง
+                    await checkUserLoginStatus();
+
                 } else {
                     liff.login();
                 }
             } catch (error) {
                 console.error('LIFF Error:', error);
-                document.getElementById('user-name').innerText = 'ผู้ใช้งานทั่วไป (ไม่ได้รันผ่าน LINE)';
+                document.getElementById('user-name').innerText = 'ระบบทำงานขัดข้อง';
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับแอป LINE ได้', 'error');
             }
         }
 
-        // 2. จัดการฟอร์มลงทะเบียน
+        // 2. ตรวจสอบสถานะการล็อกอินกับ Backend
+        async function checkUserLoginStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/v1/auth/line-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ line_user_id: lineUserId, display_name: lineDisplayName })
+                });
+
+                if (response.ok) {
+                    // 🎉 เคยสมัครแล้ว -> เซฟ Token แล้วเด้งไปหน้า Dashboard เลย
+                    const data = await response.json();
+                    localStorage.setItem("tpx_access_token", data.access_token);
+                    window.location.href = "dashboard.html";
+                } else if (response.status === 404) {
+                    // 👤 ยังไม่เคยสมัคร -> โชว์ฟอร์มลงทะเบียน
+                    document.getElementById('loading-section').classList.add('hidden');
+                    document.getElementById('register-section').classList.remove('hidden');
+                    setupUrlParameters(); // เรียกใช้งานเช็ครหัสผู้แนะนำ
+                } else {
+                    Swal.fire('ข้อผิดพลาด', 'ระบบเซิร์ฟเวอร์ตอบสนองผิดปกติ', 'error');
+                }
+            } catch (error) {
+                console.error("Login Check Error:", error);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+            }
+        }
+
+        // 3. จัดการ Parameter จาก URL (รหัสผู้แนะนำ / Genesis)
+        function setupUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isGenesis = urlParams.get('role') === 'genesis';
+            const refCode = urlParams.get('ref');
+            
+            const uplineInput = document.getElementById('upline-code');
+            const uplineBox = uplineInput.closest('div');
+
+            if (isGenesis) {
+                // สมัครเป็นรหัสต้นสาย (COMPANY-ROOT)
+                uplineBox.style.display = 'none';
+                uplineInput.removeAttribute('required');
+                uplineInput.value = 'COMPANY-ROOT';
+            } else if (refCode) {
+                // สมัครผ่านลิงก์เชิญเพื่อน
+                uplineInput.value = refCode.toUpperCase();
+                uplineInput.readOnly = true; 
+                uplineInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+            }
+        }
+
+        // 4. จัดการฟอร์มลงทะเบียน
         document.getElementById('register-form').addEventListener('submit', async function(e) {
-            e.preventDefault(); // ป้องกันเว็บรีเฟรช
+            e.preventDefault();
             
             const submitBtn = document.getElementById('submit-btn');
-            const resultBox = document.getElementById('result-box');
-            
             submitBtn.disabled = true;
-            submitBtn.innerText = 'กำลังส่งข้อมูล...';
-            submitBtn.classList.replace('bg-purple-600', 'bg-gray-400');
-            resultBox.classList.add('hidden');
-
-            // เตรียมข้อมูลส่งเข้า API
+            submitBtn.innerHTML = '<svg class="w-5 h-5 animate-spin mx-auto text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            
             const payload = {
                 full_name: document.getElementById('full-name').value,
                 phone_number: document.getElementById('phone').value,
-                upline_member_code: document.getElementById('upline-code').value || null,
+                upline_member_code: document.getElementById('upline-code').value.toUpperCase() || null,
                 line_user_id: lineUserId,
                 birth_date: document.getElementById('birth-date').value,
                 is_consent_age: document.getElementById('consent').checked
             };
 
             try {
-                const response = await fetch('https://tp-extra-system-production.up.railway.app/api/v1/users/register', {
+                const response = await fetch(`${API_URL}/api/v1/users/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -128,42 +188,31 @@
 
                 const data = await response.json();
 
-                resultBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
                 if (response.ok) {
-                    // ลงทะเบียนสำเร็จ
-                    resultBox.classList.add('bg-green-100', 'text-green-700');
-                    resultBox.innerHTML = `✅ ${data.message}<br><span class="text-lg font-bold">รหัสของคุณ: ${data.member_code}</span>`;
-                    document.getElementById('register-form').reset();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ลงทะเบียนสำเร็จ!',
+                        text: `รหัสสมาชิกของคุณคือ: ${data.member_code}`,
+                        confirmButtonColor: '#8b5cf6',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        // เมื่อกดตกลง ให้บังคับเช็คสถานะล็อกอินอีกรอบเพื่อดึง Token
+                        submitBtn.innerText = 'กำลังพาท่านเข้าสู่ระบบ...';
+                        checkUserLoginStatus(); 
+                    });
                 } else {
-                    // ติด Error จาก Backend (เช่น เบอร์ซ้ำ)
-                    resultBox.classList.add('bg-red-100', 'text-red-700');
-                    resultBox.innerText = `❌ ข้อผิดพลาด: ${data.detail}`;
+                    Swal.fire('ข้อผิดพลาด', data.detail || 'ไม่สามารถลงทะเบียนได้', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'ยืนยันการลงทะเบียน';
                 }
             } catch (error) {
-                resultBox.classList.remove('hidden');
-                resultBox.classList.add('bg-red-100', 'text-red-700');
-                resultBox.innerText = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่';
-            } finally {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerText = 'ยืนยันการลงทะเบียน';
-                submitBtn.classList.replace('bg-gray-400', 'bg-purple-600');
             }
         });
-        
-                    // ตรวจสอบว่าเป็นลิงก์เปิดรหัสบริษัทหรือไม่
-            const urlParams = new URLSearchParams(window.location.search);
-            const isGenesis = urlParams.get('role') === 'genesis';
 
-            if (isGenesis) {
-                // ซ่อนช่องผู้แนะนำและปลดล็อก required
-                const uplineInput = document.getElementById('upline-code');
-                const uplineBox = uplineInput.closest('div');
-                uplineBox.style.display = 'none';
-                uplineInput.removeAttribute('required');
-                uplineInput.value = 'COMPANY-ROOT';
-            }
-
-        // เรียกใช้งานตอนเปิดหน้าเว็บ
+        // สั่งให้ LIFF ทำงานทันทีที่โหลดเว็บเสร็จ
         initializeLiff();
     </script>
 </body>

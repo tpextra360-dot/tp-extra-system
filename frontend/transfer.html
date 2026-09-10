@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>โอนเงิน - TP EXTRA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <style>
+        .pin-dot {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            transition: all 0.2s ease-in-out;
+        }
+        .pin-dot.filled {
+            background-color: #8b5cf6;
+            transform: scale(1.1);
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-10 font-sans select-none">
+    
+    <!-- แถบด้านบน -->
+    <div class="bg-purple-600 text-white p-4 shadow-md sticky top-0 z-10 flex items-center">
+        <button onclick="window.location.href='index.html'" class="mr-4 active:scale-95 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <h1 class="text-lg font-bold tracking-wide">โอนเงิน (Transfer)</h1>
+    </div>
+
+    <!-- ฟอร์มกรอกข้อมูล -->
+    <div class="p-4 max-w-md mx-auto mt-4">
+        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-gray-100">
+            
+            <!-- รหัสผู้รับ + ปุ่มสแกน QR -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสสมาชิกผู้รับเงิน</label>
+                <div class="flex gap-2">
+                    <input type="text" id="receiverCode" class="w-full border-gray-300 rounded-xl p-3 border-2 focus:ring-purple-500 focus:border-purple-500 uppercase text-gray-800 tracking-wider font-bold" placeholder="เช่น TPX-12345">
+                    
+                    <!-- ปุ่มสแกน QR Code -->
+                    <button onclick="scanMemberQR()" class="bg-purple-100 text-purple-700 px-4 rounded-xl border-2 border-purple-200 hover:bg-purple-200 active:scale-95 transition flex items-center justify-center shadow-sm">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- จำนวนเงิน -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">จำนวนเงินที่ต้องการโอน</label>
+                <div class="relative">
+                    <input type="number" id="transferAmount" class="w-full border-gray-300 rounded-xl p-3 pl-10 border-2 focus:ring-purple-500 focus:border-purple-500 text-xl font-bold text-purple-700" placeholder="0.00">
+                    <span class="absolute left-4 top-3.5 text-gray-400 font-bold">฿</span>
+                </div>
+            </div>
+
+            <!-- บันทึกช่วยจำ -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">บันทึกช่วยจำ (ถ้ามี)</label>
+                <input type="text" id="transferNote" class="w-full border-gray-300 rounded-xl p-3 border-2 focus:ring-purple-500 focus:border-purple-500 text-sm" placeholder="เช่น โอนค่าสินค้า, ให้เพื่อน">
+            </div>
+
+            <button onclick="prepareTransfer()" class="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 active:scale-95 transition shadow-lg shadow-purple-200 text-lg">
+                ยืนยันการทำรายการ
+            </button>
+        </div>
+    </div>
+
+    <!-- หน้าต่าง Numpad และกรอก PIN -->
+    <div id="pinModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-50 hidden flex-col justify-end transition-opacity backdrop-blur-sm">
+        <div class="bg-white rounded-t-[30px] p-6 pb-8 shadow-2xl transform transition-transform duration-300 translate-y-0">
+            
+            <div class="text-center mb-6 mt-2">
+                <h2 class="text-xl font-extrabold text-gray-800">กรอกรหัส PIN 6 หลัก</h2>
+                <p class="text-sm text-gray-500 mt-1">เพื่อยืนยันการโอนเงินจำนวน <span id="displayAmount" class="font-bold text-purple-600 text-lg"></span> บาท</p>
+            </div>
+
+            <div class="flex justify-center gap-5 mb-8" id="pinDots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-x-4 gap-y-4 max-w-xs mx-auto">
+                <button onclick="pressKey('1')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">1</button>
+                <button onclick="pressKey('2')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">2</button>
+                <button onclick="pressKey('3')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">3</button>
+                <button onclick="pressKey('4')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">4</button>
+                <button onclick="pressKey('5')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">5</button>
+                <button onclick="pressKey('6')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">6</button>
+                <button onclick="pressKey('7')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">7</button>
+                <button onclick="pressKey('8')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">8</button>
+                <button onclick="pressKey('9')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">9</button>
+                
+                <button onclick="closePinModal()" class="h-16 rounded-full text-gray-500 font-bold active:bg-gray-100 transition text-lg">ยกเลิก</button>
+                <button onclick="pressKey('0')" class="h-16 rounded-full bg-gray-50 text-2xl font-semibold active:bg-gray-200 transition">0</button>
+                <button onclick="pressKey('del')" class="h-16 rounded-full text-gray-500 active:bg-gray-100 transition flex justify-center items-center">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- สคริปต์ Auth เพื่อเช็ค Token -->
+    <script src="auth.js"></script>
+
+    <script>
+        const API_URL = "https://tp-extra-system-production.up.railway.app";
+        let currentPin = "";
+        let transferData = {};
+
+        // === 📸 ฟังก์ชันเปิดกล้องสแกน QR Code ===
+        async function scanMemberQR() {
+            try {
+                // เช็คว่าอยู่ในแอป LINE และรองรับการสแกน
+                if (liff.isInClient() && liff.isApiAvailable('scanCodeV2')) {
+                    const result = await liff.scanCodeV2();
+                    
+                    if (result && result.value) {
+                        // ดึงข้อมูลมายัดลงในช่อง Input แบบพิมพ์ใหญ่
+                        document.getElementById('receiverCode').value = result.value.toUpperCase();
+                        
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success',
+                            title: 'สแกนรหัสสำเร็จ!', showConfirmButton: false, timer: 1500
+                        });
+                    }
+                } else {
+                    Swal.fire('ไม่สามารถใช้งานได้', 'ฟีเจอร์สแกนต้องใช้งานผ่านแอปพลิเคชัน LINE บนมือถือเท่านั้น', 'warning');
+                }
+            } catch (err) {
+                console.error("QR Scan Error:", err);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปิดกล้องได้', 'error');
+            }
+        }
+
+        function prepareTransfer() {
+            const receiver = document.getElementById('receiverCode').value.trim().toUpperCase();
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            const note = document.getElementById('transferNote').value.trim();
+
+            if (!receiver || !receiver.startsWith("TPX-")) {
+                Swal.fire('ข้อมูลไม่ถูกต้อง', 'กรุณากรอกรหัสสมาชิกผู้รับให้ถูกต้อง (เช่น TPX-12345)', 'warning');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                Swal.fire('ข้อมูลไม่ถูกต้อง', 'กรุณากรอกจำนวนเงินให้ถูกต้อง', 'warning');
+                return;
+            }
+
+            transferData = {
+                receiver_member_code: receiver,
+                amount: amount,
+                description: note || "โอนเงินระหว่างสมาชิก"
+            };
+
+            document.getElementById('displayAmount').innerText = amount.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('pinModal').classList.remove('hidden');
+            document.getElementById('pinModal').classList.add('flex');
+            
+            currentPin = "";
+            updatePinDots();
+        }
+
+        function closePinModal() {
+            document.getElementById('pinModal').classList.add('hidden');
+            document.getElementById('pinModal').classList.remove('flex');
+            currentPin = "";
+        }
+
+        function pressKey(key) {
+            if (key === 'del') {
+                currentPin = currentPin.slice(0, -1);
+            } else {
+                if (currentPin.length < 6) {
+                    currentPin += key;
+                }
+            }
+            
+            updatePinDots();
+
+            if (currentPin.length === 6) {
+                setTimeout(() => {
+                    executeTransferAPI();
+                }, 100);
+            }
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < currentPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        async function executeTransferAPI() {
+            const token = localStorage.getItem("tpx_access_token");
+            if (!token) {
+                Swal.fire('เซสชันหมดอายุ', 'กรุณาล็อกอินใหม่', 'error').then(() => window.location.href = 'index.html');
+                return;
+            }
+
+            transferData.pin = currentPin;
+
+            Swal.fire({
+                title: 'กำลังประมวลผล...',
+                text: 'กรุณารอสักครู่ ห้ามปิดหน้าต่างนี้',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/api/v1/wallets/transfer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(transferData)
+                });
+
+                const result = await response.json();
+                closePinModal();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'โอนเงินสำเร็จ!',
+                        html: `
+                            <div class="text-left mt-4 text-sm">
+                                <p><strong>ผู้รับ:</strong> ${transferData.receiver_member_code}</p>
+                                <p><strong>จำนวน:</strong> ${transferData.amount.toLocaleString()} ฿</p>
+                                <p><strong>เลขอ้างอิง:</strong> <span class="text-xs text-gray-500">${result.reference_no}</span></p>
+                                <p class="mt-2 text-purple-600 font-bold">ยอดเงินคงเหลือ: ${result.remaining_balance.toLocaleString()} ฿</p>
+                            </div>
+                        `,
+                        confirmButtonColor: '#8b5cf6',
+                        confirmButtonText: 'กลับหน้าหลัก'
+                    }).then(() => {
+                        window.location.href = 'index.html'; 
+                    });
+                } else {
+                    Swal.fire('ทำรายการไม่สำเร็จ', result.detail || 'เกิดข้อผิดพลาดบางอย่าง', 'error');
+                }
+            } catch (err) {
+                console.error("Transfer error:", err);
+                closePinModal();
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

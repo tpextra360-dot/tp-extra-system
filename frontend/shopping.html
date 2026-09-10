@@ -56,6 +56,14 @@
         .btn-confirm { background: #6a1b9a; color: #fff; border: none; width: 100%; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
     </style>
+    <!-- เรียกใช้ไฟล์ manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- กำหนดสีแถบด้านบนของมือถือ (Theme Color) -->
+<meta name="theme-color" content="#8b5cf6">
+
+<!-- รองรับไอคอนสำหรับ iOS (Apple แอบเรื่องมากนิดนึงครับ) -->
+<link rel="apple-touch-icon" href="assets/icon-192x192.png">
 </head>
 <body>
 
@@ -170,7 +178,7 @@
         function openPaymentModal() { document.getElementById('paymentModal').style.display = 'flex'; }
         function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    </script>
+<script src="auth.js"></script>
 
 </body>
 </html>
